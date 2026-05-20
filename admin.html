@@ -5,230 +5,227 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>系统监控矩阵台</title>
     <style>
+        /* ================= 基础与全局变量 ================= */
         :root {
-            --primary: #3498db;
-            --primary-hover: #2980b9;
-            --sidebar-bg: #2c3e50;
-            --sidebar-hover: #34495e;
-            --bg-color: #f4f7f6;
-            --text-main: #333;
-            --text-muted: #7f8c8d;
-            --border-color: #e0e6ed;
-            --success: #2ecc71;
-            --danger: #e74c3c;
-            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --primary: #3b82f6;       /* 主色调蓝 */
+            --primary-hover: #2563eb;
+            --bg-body: #f3f4f6;       /* 右侧整体背景 */
+            --bg-sidebar: #0f172a;    /* 左侧深色背景 */
+            --bg-surface: #ffffff;    /* 卡片白 */
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --sidebar-text: #94a3b8;
+            --sidebar-text-active: #ffffff;
+            --sidebar-hover: #1e293b;
+            --border: #e5e7eb;
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { 
-            font-family: system-ui, -apple-system, sans-serif; 
-            background: var(--bg-color); 
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
             color: var(--text-main);
             display: flex;
             height: 100vh;
-            overflow: hidden;
+            overflow: hidden; /* 整体防滚动，区域内滚动 */
         }
 
-        /* 左侧边栏 */
+        /* ================= 左侧导航栏 ================= */
         .sidebar {
             width: 260px;
-            background: var(--sidebar-bg);
-            color: #fff;
+            background-color: var(--bg-sidebar);
             display: flex;
             flex-direction: column;
-            transition: all 0.3s;
+            flex-shrink: 0;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+            z-index: 10;
         }
-
-        .sidebar-header {
-            padding: 24px 20px;
-            font-size: 20px;
-            font-weight: 600;
+        .sidebar-logo {
+            height: 70px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
             letter-spacing: 1px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
         }
-
+        .sidebar-logo span { color: var(--primary); margin-right: 8px; }
+        
         .nav-menu {
-            list-style: none;
-            padding: 20px 0;
-            flex-grow: 1;
-        }
-
-        .nav-item {
-            padding: 15px 24px;
-            cursor: pointer;
-            font-size: 15px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.2s;
-            color: #bdc3c7;
-            border-left: 4px solid transparent;
-        }
-
-        .nav-item:hover {
-            background: var(--sidebar-hover);
-            color: #fff;
-        }
-
-        .nav-item.active {
-            background: var(--sidebar-hover);
-            color: #fff;
-            border-left: 4px solid var(--primary);
-        }
-
-        /* 右侧主内容区 */
-        .main-content {
-            flex-grow: 1;
-            overflow-y: auto;
+            padding: 20px 12px;
             display: flex;
             flex-direction: column;
+            gap: 8px;
         }
-
-        .top-header {
-            background: #fff;
-            padding: 20px 30px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        .nav-item {
+            padding: 14px 18px;
+            color: var(--sidebar-text);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+            font-weight: 500;
             display: flex;
-            justify-content: space-between;
             align-items: center;
         }
-
-        .content-wrapper {
-            padding: 30px;
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto;
+        .nav-item:hover {
+            background-color: var(--sidebar-hover);
+            color: var(--sidebar-text-active);
+        }
+        .nav-item.active {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
-        /* 卡片与通用样式 */
-        .tab-content { display: none; animation: fadeIn 0.3s ease; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* ================= 右侧主内容区 ================= */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .top-header {
+            height: 70px;
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 32px;
+            box-sizing: border-box;
+            justify-content: space-between;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .header-title { font-size: 1.1rem; font-weight: 600; color: var(--text-main); }
+        .header-user { font-size: 0.9rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+        .header-user .avatar { width: 32px; height: 32px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--text-muted); }
 
+        .content-area {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        /* 标签页内容动画 */
+        .tab-content { display: none; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .tab-content.active { display: block; }
+        @keyframes slideUp { 
+            from { opacity: 0; transform: translateY(15px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* ================= 卡片与组件 ================= */
         .card { 
-            background: #fff; 
+            background: var(--bg-surface); 
             padding: 24px; 
             border-radius: 12px; 
-            box-shadow: var(--card-shadow); 
             margin-bottom: 24px; 
-            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03); 
+            border: 1px solid var(--border); 
+            position: relative;
         }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .card-header h3 { margin: 0; font-size: 1.1rem; color: var(--text-main); }
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .card-header h3 { margin: 0; color: #2c3e50; }
-
-        /* 按钮与表单 */
-        .btn { 
-            background: var(--primary); color: white; border: none; padding: 10px 18px; 
-            border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;
-            transition: background 0.2s, transform 0.1s;
-        }
-        .btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
-        .btn:active { transform: translateY(0); }
-        .btn-danger { background: var(--danger); }
-        .btn-danger:hover { background: #c0392b; }
-        .btn-success { background: var(--success); }
-        .btn-success:hover { background: #27ae60; }
-        .btn-block { width: 100%; padding: 14px; font-size: 16px; margin-top: 10px; }
-
-        .form-group { margin-bottom: 18px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #34495e; font-size: 14px; }
-        .form-group input, .form-group textarea { 
-            width: 100%; padding: 10px 12px; box-sizing: border-box; 
-            border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace;
-            transition: border-color 0.2s;
-            font-size: 14px;
-        }
-        .form-group input:focus, .form-group textarea:focus {
-            outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
-        }
-
-        /* 表格样式 */
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        th, td { padding: 14px 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
-        th { background-color: #f8fafc; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
-        tr:hover { background-color: #f8fafc; }
-        .status-success { color: var(--success); font-weight: bold; background: #e8f8f5; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
-        .address-tag { display: inline-block; background: #eff6ff; color: #2563eb; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; border: 1px solid #bfdbfe; }
+        /* 表格精美化 */
+        .table-container { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; white-space: nowrap; }
+        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background-color: #f8fafc; color: var(--text-muted); font-weight: 600; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: #f8fafc; }
         
-        /* 开关样式 */
-        .switch { position: relative; display: inline-block; width: 44px; height: 22px; vertical-align: middle; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 22px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--success); }
-        input:checked + .slider:before { transform: translateX(22px); }
+        .address-tag { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-family: ui-monospace, monospace; }
+        .hash-tag { color: var(--text-muted); text-decoration: none; font-family: ui-monospace, monospace; }
+        .hash-tag:hover { color: var(--primary); text-decoration: underline; }
+        .status-success { color: #10b981; font-weight: 600; background: #d1fae5; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; }
 
-        .webhook-card { border-left: 4px solid var(--primary); }
+        /* 表单输入与按钮 */
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.9rem; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(59,130,246,0.2); }
+        .btn:active { transform: translateY(0); }
+        .btn-danger { background: #ef4444; } .btn-danger:hover { background: #dc2626; box-shadow: 0 4px 6px rgba(239,68,68,0.2);}
+        .btn-success { background: #10b981; } .btn-success:hover { background: #059669; box-shadow: 0 4px 6px rgba(16,185,129,0.2);}
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500; color: var(--text-main); }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-family: ui-monospace, monospace; font-size: 0.9rem; transition: all 0.2s; outline: none; background: #f8fafc; }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        .form-hint { font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; }
+
+        /* 开关控件 */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; vertical-align: middle; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        input:checked + .slider { background-color: #10b981; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .webhook-card { border-left: 4px solid var(--primary); padding-left: 20px; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="sidebar-header">
-            ⚡ 夏雨监控矩阵
+        <div class="sidebar-logo">
+            <span>●</span> 收款监控矩阵
         </div>
-        <ul class="nav-menu">
-            <li class="nav-item active" onclick="switchTab('transactions', this)">
-                📊 交易流水中心
-            </li>
-            <li class="nav-item" onclick="switchTab('webhooks', this)">
-                🔗 发卡回调路由
-            </li>
-            <li class="nav-item" onclick="switchTab('settings', this)">
-                ⚙️ 系统基础配置
-            </li>
-        </ul>
+        <div class="nav-menu">
+            <div class="nav-item active" onclick="switchTab('transactions', '交易流水')">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                交易流水 (Orders)
+            </div>
+            <div class="nav-item" onclick="switchTab('webhooks', 'API与回调路由')">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                发卡网 API 回调
+            </div>
+            <div class="nav-item" onclick="switchTab('settings', '系统基础设置')">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                基础环境配置
+            </div>
+        </div>
     </div>
 
-    <div class="main-content">
+    <div class="main-wrapper">
         <div class="top-header">
-            <h2 id="page-title" style="font-size: 18px; color: #2c3e50; font-weight: 600;">交易流水中心</h2>
-            <div style="font-size: 14px; color: #7f8c8d;">当前状态：运行中</div>
+            <div class="header-title" id="current-page-title">交易流水 (Orders)</div>
+            <div class="header-user">
+                <div class="avatar">A</div>
+                Admin (夏雨在线)
+            </div>
         </div>
 
-        <div class="content-wrapper">
+        <div class="content-area">
+            
             <div id="transactions" class="tab-content active">
                 <div class="card">
                     <div class="card-header">
-                        <h3>实时进账监控</h3>
-                        <button class="btn" onclick="syncChain()">🔄 手动触发链上抓取</button>
+                        <h3>链上入账记录 (TRC20-USDT)</h3>
+                        <button class="btn" onclick="syncChain()">⚡ 强制触发展发</button>
                     </div>
                     <div class="table-container">
                         <table id="txTable">
-                            <tr><th>交易哈希</th><th>收款靓号 (To)</th><th>金额 (USDT)</th><th>时间 (Asia/Shanghai)</th><th>状态</th></tr>
+                            <tr><th>交易哈希</th><th>收款靓号 (To)</th><th>金额 (USDT)</th><th>系统时间 (Asia/Shanghai)</th><th>状态</th></tr>
                         </table>
                     </div>
                 </div>
             </div>
 
             <div id="webhooks" class="tab-content">
-                <div class="card">
-                    <div class="card-header">
-                        <div>
-                            <h3>分发路由节点</h3>
-                            <p style="color:var(--text-muted); font-size:13px; margin-top:5px;">输入需要通知的收款靓号，用英文逗号分隔。输入 * 代表该发卡网接收所有靓号的付款通知。</p>
-                        </div>
-                        <button class="btn btn-success" onclick="addWebhook()">+ 新增路由节点</button>
+                <div class="card-header" style="margin-bottom: 20px;">
+                    <div>
+                        <h3 style="margin:0;">发卡网异步回调引擎</h3>
+                        <div class="form-hint">绑定规则：输入需要通知的收款靓号，用英文逗号分隔。输入 * 代表接收所有付款通知。</div>
                     </div>
-                    
-                    <div id="webhook_list"></div>
-                    
-                    <button class="btn btn-block" onclick="saveWebhooks()">💾 部署并保存所有回调配置</button>
+                    <button class="btn btn-success" onclick="addWebhook()">+ 新增业务节点</button>
                 </div>
+                
+                <div id="webhook_list"></div>
+                
+                <button class="btn" onclick="saveWebhooks()" style="width: 100%; padding: 14px; font-size: 1rem; margin-top: 10px;">💾 保存并应用回调路由</button>
             </div>
 
             <div id="settings" class="tab-content">
@@ -237,61 +234,72 @@
                         <h3>全局波场监控池</h3>
                     </div>
                     <div class="form-group">
-                        <label>监控靓号地址池 (每行一个，系统会自动循环抓取):</label>
-                        <textarea id="set_addresses" rows="5" placeholder="输入波场地址，每行一个..."></textarea>
+                        <label>监控地址簿 (支持无限追加):</label>
+                        <textarea id="set_addresses" rows="5" placeholder="输入波场极品靓号，每行一个..."></textarea>
+                        <div class="form-hint">Cloudflare Workers 会在后台定时巡检这些地址。</div>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h3>安全认证设置</h3>
+                        <h3>安全鉴权设置</h3>
                     </div>
                     <div class="form-group">
-                        <label>后台管理员账号:</label>
+                        <label>面板登录账号:</label>
                         <input type="text" id="set_username">
                     </div>
                     <div class="form-group">
-                        <label>后台管理员密码:</label>
+                        <label>面板登录密码:</label>
                         <input type="password" id="set_password">
                     </div>
-                    <button class="btn btn-block" onclick="saveSettings()">保存基础配置</button>
+                    <button class="btn" onclick="saveSettings()">保存基础配置</button>
                 </div>
             </div>
+
         </div>
     </div>
 
     <script>
         let webhooksData = [];
 
-        function switchTab(tabId, element) {
-            // 切换内容
+        function switchTab(tabId, title) {
+            // 切换内容显示
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             
-            // 切换侧边栏菜单高亮
+            // 切换菜单激活状态
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            element.classList.add('active');
-
-            // 联动更新顶部标题
-            document.getElementById('page-title').innerText = element.innerText.trim();
+            event.currentTarget.classList.add('active');
+            
+            // 动态修改顶部标题
+            document.getElementById('current-page-title').innerText = title;
         }
 
         async function initData() {
+            // 加载基础设置
             const confRes = await fetch('/api/settings');
             const config = await confRes.json();
             document.getElementById('set_addresses').value = (config.addresses || []).join('\n');
             document.getElementById('set_username').value = config.username || '';
             document.getElementById('set_password').value = config.password || '';
 
+            // 加载订单流水
             const res = await fetch('/api/orders');
             const data = await res.json();
             const table = document.getElementById('txTable');
             data.forEach(row => {
                 const tr = table.insertRow();
                 const toAddr = row.to_address ? `<span class="address-tag">${row.to_address.substring(0,8)}...</span>` : '-';
-                tr.innerHTML = `<td><a href="https://tronscan.org/#/transaction/${row.tx_hash}" target="_blank" style="color:#3498db; text-decoration:none;">${row.tx_hash.substring(0,8)}...</a></td><td>${toAddr}</td><td><strong style="color:#e67e22; font-size:15px;">${row.amount}</strong></td><td>${new Date(row.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}</td><td><span class="status-success">${row.status}</span></td>`;
+                tr.innerHTML = `
+                    <td><a href="https://tronscan.org/#/transaction/${row.tx_hash}" target="_blank" class="hash-tag">${row.tx_hash.substring(0,10)}...</a></td>
+                    <td>${toAddr}</td>
+                    <td><strong style="color:#e67e22; font-size:1.1em;">${row.amount}</strong></td>
+                    <td><span style="color:var(--text-muted)">${new Date(row.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}</span></td>
+                    <td><span class="status-success">${row.status.toUpperCase()}</span></td>
+                `;
             });
 
+            // 加载 Webhook 配置
             const whRes = await fetch('/api/webhooks');
             webhooksData = await whRes.json();
             renderWebhooks();
@@ -301,34 +309,40 @@
             const container = document.getElementById('webhook_list');
             container.innerHTML = '';
             if(!webhooksData || webhooksData.length === 0) {
-                container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding: 40px 0; background:#f8fafc; border-radius:8px; margin-bottom:20px;">暂未配置发卡网回调，当前仅记账不发货</div>';
+                container.innerHTML = `
+                <div style="text-align:center; padding: 40px 20px; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; margin-bottom: 20px;">
+                    <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom:10px;"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                    <p style="color:#64748b; margin:0;">系统暂无回调节点。当前只记账，不触发外部发卡网发货。</p>
+                </div>`;
                 return;
             }
 
             webhooksData.forEach((wh, index) => {
                 container.innerHTML += `
-                <div class="card webhook-card" style="box-shadow: none; background: #fafafa;">
-                    <div class="card-header" style="margin-bottom: 15px; padding-bottom: 10px;">
-                        <strong style="font-size: 16px; color: #2c3e50;">🚀 路由节点 #${index + 1}</strong>
-                        <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="card webhook-card">
+                    <div class="card-header" style="margin-bottom: 15px;">
+                        <h3 style="font-size: 1rem;">节点 #${index + 1}</h3>
+                        <div style="display:flex; align-items:center; gap: 15px;">
                             <label class="switch">
                                 <input type="checkbox" id="wh_enable_${index}" ${wh.enabled ? 'checked' : ''} onchange="updateWh(${index})">
                                 <span class="slider"></span>
                             </label>
-                            <button class="btn btn-danger" style="padding: 6px 12px; font-size: 12px;" onclick="deleteWebhook(${index})">删除节点</button>
+                            <button class="btn btn-danger" style="padding: 6px 10px; font-size: 0.8rem;" onclick="deleteWebhook(${index})">删除</button>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>CALLBACK_URL (接收接口):</label>
-                        <input type="text" id="wh_url_${index}" value="${wh.url || ''}" placeholder="https://你的发卡网.com/api/notify" onchange="updateWh(${index})">
+                        <label>CALLBACK_URL (POST 接收接口):</label>
+                        <input type="text" id="wh_url_${index}" value="${wh.url || ''}" placeholder="https://api.your-shop.com/notify" onchange="updateWh(${index})">
                     </div>
-                    <div class="form-group">
-                        <label>APP_SECRET (通信签名密钥):</label>
-                        <input type="text" id="wh_secret_${index}" value="${wh.secret || ''}" placeholder="如 xia_yu_super_secret" onchange="updateWh(${index})">
-                    </div>
-                    <div class="form-group" style="margin-bottom:0;">
-                        <label>绑定的靓号组合:</label>
-                        <input type="text" id="wh_binds_${index}" value="${wh.binds || '*'}" placeholder="TJxxxx, TYxxxx (填 * 接收所有)" onchange="updateWh(${index})">
+                    <div style="display:flex; gap: 15px;">
+                        <div class="form-group" style="flex:1;">
+                            <label>APP_SECRET (通信签名密钥):</label>
+                            <input type="text" id="wh_secret_${index}" value="${wh.secret || ''}" placeholder="如 xia_yu_secret" onchange="updateWh(${index})">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>绑定的靓号池 (* 代表全部):</label>
+                            <input type="text" id="wh_binds_${index}" value="${wh.binds || '*'}" placeholder="TJxxxx, TYxxxx" onchange="updateWh(${index})">
+                        </div>
                     </div>
                 </div>
                 `;
@@ -348,7 +362,7 @@
         }
 
         function deleteWebhook(index) {
-            if(confirm('确定删除此节点吗？该发卡网将无法再收到进账通知。')) {
+            if(confirm('确定切断此发货节点的路由吗？')) {
                 webhooksData.splice(index, 1);
                 renderWebhooks();
             }
@@ -360,8 +374,8 @@
                 method: 'POST',
                 body: JSON.stringify(webhooksData)
             });
-            if(res.ok) alert('回调节点配置保存成功！');
-            else alert('保存失败，请检查网络！');
+            if(res.ok) alert('✅ 回调节点配置保存成功！系统将在下次轮询时生效。');
+            else alert('❌ 保存失败，请检查网络或 KV 绑定配置！');
         }
 
         async function saveSettings() {
@@ -376,13 +390,13 @@
                 body: JSON.stringify(data)
             });
             if(res.ok) {
-                alert('基础配置保存成功！');
+                alert('✅ 基础环境配置保存成功！');
                 location.reload();
-            } else alert('保存失败');
+            } else alert('❌ 保存失败');
         }
 
         async function syncChain() {
-            alert('指令已下发，后台将开始循环抓取并推送回调。');
+            alert('📡 指令已下发！正在通知 Worker 引擎抓取波场链上数据并分发回调。稍后请刷新页面。');
             await fetch('/api/sync', {method: 'POST'});
             location.reload();
         }
