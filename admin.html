@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>夏雨在线系统监控矩阵台</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f4f7f6; padding: 20px; color: #333; }
+        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .tabs { margin-bottom: 20px; }
+        .tabs button { background: #ecf0f1; border: none; padding: 10px 20px; cursor: pointer; font-size: 16px; border-radius: 5px 5px 0 0; }
+        .tabs button.active { background: #3498db; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; }
+        .status-success { color: #27ae60; font-weight: bold; }
+        .btn { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-top: 10px;}
+        .btn-danger { background: #e74c3c; }
+        .btn-success { background: #2ecc71; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group textarea { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; }
+        .card { background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #eee; position: relative;}
+        .address-tag { display: inline-block; background: #e8f4f8; color: #2980b9; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
+        
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; vertical-align: middle; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #2ecc71; }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .webhook-card { border-left: 4px solid #3498db; margin-bottom: 20px;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>系统监控矩阵台</h1>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('transactions')">交易流水</button>
+            <button class="tab-btn" onclick="switchTab('webhooks')">API及回调配置 (核心)</button>
+            <button class="tab-btn" onclick="switchTab('settings')">基础设置</button>
+        </div>
+
+        <div id="transactions" class="tab-content active">
+            <button class="btn" onclick="syncChain()">手动触发链上巡检</button>
+            <table id="txTable">
+                <tr><th>交易哈希</th><th>收款靓号 (To)</th><th>金额 (USDT)</th><th>时间 (Asia/Shanghai)</th><th>状态</th></tr>
+            </table>
+        </div>
+
+        <div id="webhooks" class="tab-content">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin:0;">发卡网异步回调分发路由</h3>
+                <button class="btn btn-success" onclick="addWebhook()">+ 新增回调节点</button>
+            </div>
+            <p style="color:#7f8c8d; font-size:0.9em;">绑定规则：输入需要通知的收款靓号，用英文逗号分隔。输入 * 代表该发卡网接收所有靓号的付款通知。</p>
+            <div id="webhook_list"></div>
+            <button class="btn" onclick="saveWebhooks()" style="width: 100%; padding: 12px; font-size: 16px;">💾 保存所有回调配置</button>
+        </div>
+
+        <div id="settings" class="tab-content">
+            <div class="card">
+                <h3>全局波场监控池</h3>
+                <div class="form-group">
+                    <label>波场靓号地址池 (每行一个，系统会遍历抓取):</label>
+                    <textarea id="set_addresses" rows="6" placeholder="输入波场地址，每行一个..."></textarea>
+                </div>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                <div class="form-group">
+                    <label>后台管理员账号:</label>
+                    <input type="text" id="set_username">
+                </div>
+                <div class="form-group">
+                    <label>后台管理员密码:</label>
+                    <input type="password" id="set_password">
+                </div>
+                <button class="btn" onclick="saveSettings()">保存基础设置</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let webhooksData = [];
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function initData() {
+            const confRes = await fetch('/api/settings');
+            const config = await confRes.json();
+            document.getElementById('set_addresses').value = (config.addresses || []).join('\n');
+            document.getElementById('set_username').value = config.username || '';
+            document.getElementById('set_password').value = config.password || '';
+
+            const res = await fetch('/api/orders');
+            const data = await res.json();
+            const table = document.getElementById('txTable');
+            data.forEach(row => {
+                const tr = table.insertRow();
+                const toAddr = row.to_address ? `<span class="address-tag">${row.to_address.substring(0,8)}...</span>` : '-';
+                tr.innerHTML = `<td><a href="https://tronscan.org/#/transaction/${row.tx_hash}" target="_blank">${row.tx_hash.substring(0,8)}...</a></td><td>${toAddr}</td><td><strong style="color:#e67e22;">${row.amount}</strong></td><td>${new Date(row.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}</td><td class="status-success">${row.status}</td>`;
+            });
+
+            const whRes = await fetch('/api/webhooks');
+            webhooksData = await whRes.json();
+            renderWebhooks();
+        }
+
+        function renderWebhooks() {
+            const container = document.getElementById('webhook_list');
+            container.innerHTML = '';
+            if(!webhooksData || webhooksData.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#95a5a6; padding: 20px;">暂未配置任何发卡网回调，系统当前只记账不发货。</p>';
+                return;
+            }
+
+            webhooksData.forEach((wh, index) => {
+                container.innerHTML += `
+                <div class="card webhook-card">
+                    <div style="display:flex; justify-content: space-between; margin-bottom: 10px;">
+                        <strong>节点 #${index + 1}</strong>
+                        <div>
+                            状态：
+                            <label class="switch">
+                                <input type="checkbox" id="wh_enable_${index}" ${wh.enabled ? 'checked' : ''} onchange="updateWh(${index})">
+                                <span class="slider"></span>
+                            </label>
+                            <button class="btn btn-danger" style="padding: 4px 8px; margin-left: 10px;" onclick="deleteWebhook(${index})">删除</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>CALLBACK_URL (发卡网接收接口):</label>
+                        <input type="text" id="wh_url_${index}" value="${wh.url || ''}" placeholder="https://你的发卡网.com/api/notify" onchange="updateWh(${index})">
+                    </div>
+                    <div class="form-group">
+                        <label>APP_SECRET (通信签名密钥):</label>
+                        <input type="text" id="wh_secret_${index}" value="${wh.secret || ''}" placeholder="如 xia_yu_super_secret" onchange="updateWh(${index})">
+                    </div>
+                    <div class="form-group">
+                        <label>绑定的靓号组合 (多个用英文逗号隔开，填 * 代表接收所有靓号):</label>
+                        <input type="text" id="wh_binds_${index}" value="${wh.binds || '*'}" placeholder="TJxxxx, TYxxxx" onchange="updateWh(${index})">
+                    </div>
+                </div>
+                `;
+            });
+        }
+
+        function updateWh(index) {
+            webhooksData[index].url = document.getElementById(`wh_url_${index}`).value;
+            webhooksData[index].secret = document.getElementById(`wh_secret_${index}`).value;
+            webhooksData[index].binds = document.getElementById(`wh_binds_${index}`).value;
+            webhooksData[index].enabled = document.getElementById(`wh_enable_${index}`).checked;
+        }
+
+        function addWebhook() {
+            webhooksData.push({ url: '', secret: '', binds: '*', enabled: true });
+            renderWebhooks();
+        }
+
+        function deleteWebhook(index) {
+            if(confirm('确定删除此节点吗？')) {
+                webhooksData.splice(index, 1);
+                renderWebhooks();
+            }
+        }
+
+        async function saveWebhooks() {
+            document.activeElement.blur(); 
+            const res = await fetch('/api/webhooks', {
+                method: 'POST',
+                body: JSON.stringify(webhooksData)
+            });
+            if(res.ok) alert('回调节点配置保存成功！');
+            else alert('保存失败！');
+        }
+
+        async function saveSettings() {
+            const addresses = document.getElementById('set_addresses').value.split('\n').map(a => a.trim()).filter(a => a);
+            const data = {
+                addresses: addresses,
+                username: document.getElementById('set_username').value,
+                password: document.getElementById('set_password').value
+            };
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+            if(res.ok) {
+                alert('基础配置保存成功！');
+                location.reload();
+            } else alert('保存失败');
+        }
+
+        async function syncChain() {
+            alert('指令已下发，后台将开始循环抓取并推送回调。');
+            await fetch('/api/sync', {method: 'POST'});
+            location.reload();
+        }
+
+        initData();
+    </script>
+</body>
+</html>
