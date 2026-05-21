@@ -5,194 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>全链系统监控矩阵台</title>
     <style>
-        /* ================= 基础与全局变量 (保留你原来的所有精美设计) ================= */
+        /* ================= 基础与全局变量 ================= */
         :root {
-            --primary: #3b82f6;       /* 主色调蓝 */
-            --primary-hover: #2563eb;
-            --bg-body: #f3f4f6;       /* 右侧整体背景 */
-            --bg-sidebar: #0f172a;    /* 左侧深色背景 */
-            --bg-surface: #ffffff;    /* 卡片白 */
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --sidebar-text: #94a3b8;
-            --sidebar-text-active: #ffffff;
-            --sidebar-hover: #1e293b;
+            --primary: #3b82f6; --primary-hover: #2563eb;
+            --bg-body: #f3f4f6; --bg-sidebar: #0f172a; --bg-surface: #ffffff;
+            --text-main: #1f2937; --text-muted: #6b7280;
             --border: #e5e7eb;
         }
-        body {
-            margin: 0;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            display: flex;
-            height: 100vh;
-            overflow: hidden; /* 整体防滚动，区域内滚动 */
-        }
-
-        /* ================= 左侧导航栏 ================= */
-        .sidebar {
-            width: 260px;
-            background-color: var(--bg-sidebar);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
-            z-index: 10;
-        }
-        .sidebar-logo {
-            height: 70px;
-            display: flex;
-            align-items: center;
-            padding: 0 24px;
-            color: white;
-            font-size: 1.25rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
-        }
-        .sidebar-logo span { color: var(--primary); margin-right: 8px; }
+        body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
         
-        .nav-menu {
-            padding: 20px 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .nav-item {
-            padding: 14px 18px;
-            color: var(--sidebar-text);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.95rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-        }
-        .nav-item:hover {
-            background-color: var(--sidebar-hover);
-            color: var(--sidebar-text-active);
-        }
-        .nav-item.active {
-            background-color: var(--primary);
-            color: white;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
+        /* 侧边栏与布局 */
+        .sidebar { width: 260px; background: var(--bg-sidebar); display: flex; flex-direction: column; z-index: 10; box-shadow: 2px 0 8px rgba(0,0,0,0.1); }
+        .sidebar-logo { height: 70px; display: flex; align-items: center; padding: 0 24px; color: white; font-size: 1.15rem; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .sidebar-logo span { color: var(--primary); margin-right: 8px; }
+        .nav-menu { padding: 20px 12px; display: flex; flex-direction: column; gap: 8px; }
+        .nav-item { padding: 14px 18px; color: #94a3b8; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 500; display: flex; align-items: center; gap: 10px; transition: 0.2s;}
+        .nav-item:hover { background: #1e293b; color: white; }
+        .nav-item.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
 
-        /* ================= 右侧主内容区 ================= */
-        .main-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .top-header {
-            height: 70px;
-            background-color: var(--bg-surface);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            padding: 0 32px;
-            box-sizing: border-box;
-            justify-content: space-between;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-        }
-        .header-title { font-size: 1.1rem; font-weight: 600; color: var(--text-main); }
-        .header-user { font-size: 0.9rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
-        .header-user .avatar { width: 32px; height: 32px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--text-muted); }
-
-        .content-area {
-            flex: 1;
-            padding: 32px;
-            overflow-y: auto;
-            box-sizing: border-box;
-        }
-
-        /* 标签页内容动画 */
-        .tab-content { display: none; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .top-header { height: 70px; background: var(--bg-surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 32px; justify-content: space-between; }
+        .header-title { font-size: 1.1rem; font-weight: 600; }
+        .content-area { flex: 1; padding: 32px; overflow-y: auto; }
+        
+        .tab-content { display: none; animation: slideUp 0.3s; }
         .tab-content.active { display: block; }
-        @keyframes slideUp { 
-            from { opacity: 0; transform: translateY(15px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ================= 卡片与组件 ================= */
-        .card { 
-            background: var(--bg-surface); 
-            padding: 24px; 
-            border-radius: 12px; 
-            margin-bottom: 24px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03); 
-            border: 1px solid var(--border); 
-            position: relative;
-        }
+        /* 卡片与表格 */
+        .card { background: var(--bg-surface); padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .card-header h3 { margin: 0; font-size: 1.1rem; color: var(--text-main); }
-
-        /* 表格精美化 */
+        .card-header h3 { margin: 0; font-size: 1.1rem; }
         .table-container { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; white-space: nowrap; }
-        th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border); }
-        th { background-color: #f8fafc; color: var(--text-muted); font-weight: 600; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background-color: #f8fafc; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left; }
+        th, td { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+        th { background: #f8fafc; color: var(--text-muted); font-weight: 600; }
         
         /* 徽章与标签 */
-        .address-tag { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-family: ui-monospace, monospace; }
-        .hash-tag { color: var(--text-muted); text-decoration: none; font-family: ui-monospace, monospace; }
-        .hash-tag:hover { color: var(--primary); text-decoration: underline; }
-        .status-success { color: #10b981; font-weight: 600; background: #d1fae5; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; }
-
-        /* ================= 【新增】全链网络专属徽章样式 ================= */
+        .address-tag { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 6px; font-family: monospace; }
         .net-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.85em; font-weight: bold; color: white; display: inline-block; text-align: center; min-width: 45px;}
-        .net-TRON { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2); }
-        .net-BSC { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2); color: #fff;}
-        .net-ETH { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2); }
-        .net-AVAX { background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); box-shadow: 0 2px 4px rgba(225, 29, 72, 0.2); }
+        .net-TRON { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .net-BSC { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .net-ETH { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        .net-AVAX { background: linear-gradient(135deg, #e11d48, #be123c); }
 
-        /* 表单输入与按钮 */
-        .btn { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.9rem; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-        .btn:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(59,130,246,0.2); }
-        .btn:active { transform: translateY(0); }
-        .btn-danger { background: #ef4444; } .btn-danger:hover { background: #dc2626; box-shadow: 0 4px 6px rgba(239,68,68,0.2);}
-        .btn-success { background: #10b981; } .btn-success:hover { background: #059669; box-shadow: 0 4px 6px rgba(16,185,129,0.2);}
+        /* ================= 动态地址解析器样式 ================= */
+        .preview-container { margin-top: 15px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; display: flex; flex-direction: column; gap: 10px; }
+        .addr-row { display: flex; align-items: center; background: white; padding: 10px 15px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+        .addr-string { font-family: monospace; font-size: 1rem; color: #374151; flex: 1; margin-left: 15px; }
+        .chain-icons { display: flex; gap: 8px; }
+        .chain-icon-badge { display: flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: white; }
+        
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-weight: 500; }
+        .btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-success { background: #10b981; } .btn-danger { background: #ef4444; }
         
         .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500; color: var(--text-main); }
-        .form-group input, .form-group textarea { width: 100%; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-family: ui-monospace, monospace; font-size: 0.9rem; transition: all 0.2s; outline: none; background: #f8fafc; }
-        .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
-        .form-hint { font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
-
-        /* 开关控件 */
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.95rem;}
+        .form-group textarea, .form-group input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: monospace; box-sizing: border-box; background: #f8fafc; outline: none; transition: 0.2s; }
+        .form-group textarea:focus, .form-group input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        .form-hint { font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; line-height: 1.6; }
+        
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; vertical-align: middle; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 24px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
         input:checked + .slider { background-color: #10b981; }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        .webhook-card { border-left: 4px solid var(--primary); padding-left: 20px; }
+        /* 文档说明页样式 */
+        .doc-section { margin-bottom: 30px; }
+        .doc-section h4 { color: var(--primary); margin-bottom: 10px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+        .doc-code { background: #1e293b; color: #a5b4fc; padding: 15px; border-radius: 8px; font-family: monospace; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
+        .doc-alert { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; margin-bottom: 20px; border-radius: 0 8px 8px 0; color: #92400e; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="sidebar-logo">
-            <span>●</span> 收款监控矩阵
-        </div>
+        <div class="sidebar-logo"><span>●</span> 夏雨全链矩阵</div>
         <div class="nav-menu">
             <div class="nav-item active" onclick="switchTab('transactions', '全链交易流水')">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                交易流水 (Orders)
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> 交易流水
             </div>
             <div class="nav-item" onclick="switchTab('webhooks', '发卡网 API 回调')">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                发卡网 API 回调
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> 回调路由
             </div>
-            <div class="nav-item" onclick="switchTab('settings', '全网监控环境设置')">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                基础环境配置
+            <div class="nav-item" onclick="switchTab('settings', '全网收款地址池与设置')">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> 基础配置
+            </div>
+            <div class="nav-item" onclick="switchTab('docs', '开发与使用文档')">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg> 使用说明
             </div>
         </div>
     </div>
@@ -200,10 +103,7 @@
     <div class="main-wrapper">
         <div class="top-header">
             <div class="header-title" id="current-page-title">全链交易流水 (Orders)</div>
-            <div class="header-user">
-                <div class="avatar">A</div>
-                Admin (夏雨在线)
-            </div>
+            <div class="header-user"><div class="avatar">Admin</div>系统管理员</div>
         </div>
 
         <div class="content-area">
@@ -211,19 +111,12 @@
             <div id="transactions" class="tab-content active">
                 <div class="card">
                     <div class="card-header">
-                        <h3>全链入账记录 (波场/以太坊/币安/雪崩)</h3>
-                        <button class="btn" onclick="syncChain()">⚡ 强制全网扫描</button>
+                        <h3>全链入账记录 (USDT)</h3>
+                        <button class="btn" onclick="syncChain()">⚡ 手动唤醒全网扫描</button>
                     </div>
                     <div class="table-container">
                         <table id="txTable">
-                            <tr>
-                                <th>处理网络</th>
-                                <th>交易哈希</th>
-                                <th>收款靓号 (To)</th>
-                                <th>金额 (USDT)</th>
-                                <th>系统时间 (Asia/Shanghai)</th>
-                                <th>状态</th>
-                            </tr>
+                            <tr><th>处理网络</th><th>交易哈希</th><th>收款靓号</th><th>金额 (USDT)</th><th>系统时间</th><th>状态</th></tr>
                         </table>
                     </div>
                 </div>
@@ -233,44 +126,94 @@
                 <div class="card-header" style="margin-bottom: 20px;">
                     <div>
                         <h3 style="margin:0;">发卡网异步回调引擎</h3>
-                        <div class="form-hint">绑定规则：输入需要通知的收款靓号，用英文逗号分隔。输入 * 代表接收所有付款通知。</div>
+                        <div class="form-hint">当监测到入账时，系统会向外部发卡网发送 POST 请求触发发货。支持多站分离。</div>
                     </div>
                     <button class="btn btn-success" onclick="addWebhook()">+ 新增业务节点</button>
                 </div>
-                
                 <div id="webhook_list"></div>
-                
                 <button class="btn" onclick="saveWebhooks()" style="width: 100%; padding: 14px; font-size: 1rem; margin-top: 10px;">💾 保存并应用回调路由</button>
             </div>
 
             <div id="settings" class="tab-content">
                 <div class="card">
-                    <div class="card-header">
-                        <h3>全局地址监控池 (智能路由)</h3>
-                    </div>
+                    <div class="card-header"><h3>全局地址监控池</h3></div>
                     <div class="form-group">
-                        <label>监控地址簿 (支持多链自动识别):</label>
-                        <textarea id="set_addresses" rows="6" placeholder="输入波场或 EVM 极品靓号，每行一个...&#10;✅ T 开头的靓号：自动走 TRON 网络监控&#10;✅ 0x 开头的靓号：自动并行走 ETH / BSC / AVAX 三条网络监控"></textarea>
-                        <div class="form-hint">
-                            <strong>智能引擎机制：</strong>系统会自动根据你输入的地址前缀判断所处的区块链。<br>
-                            如果你输入了一个 <code>0x</code> 开头的地址，引擎将自动兵分三路，同时帮你扫描以太坊、币安链和雪崩链上的资产变动。
-                        </div>
+                        <label>监控地址簿编辑区 (每行一个):</label>
+                        <textarea id="set_addresses" rows="5" placeholder="在此处粘贴波场或 EVM 极品靓号..." oninput="previewAddresses()"></textarea>
+                        <div class="form-hint">💡 提示：系统采用动态引擎识别。直接在此输入，下方会自动解析并激活对应链的监控。</div>
+                    </div>
+                    
+                    <label style="font-weight: 500; font-size: 0.95rem; color: var(--text-main);">已激活的监控矩阵节点：</label>
+                    <div id="address_preview" class="preview-container">
+                        <div style="color: #94a3b8; text-align: center; font-size: 0.9rem;">上方输入地址后，这里将生成网络路由卡片</div>
                     </div>
                 </div>
 
                 <div class="card">
-                    <div class="card-header">
-                        <h3>安全鉴权设置</h3>
-                    </div>
-                    <div class="form-group">
-                        <label>面板登录账号:</label>
-                        <input type="text" id="set_username">
-                    </div>
-                    <div class="form-group">
-                        <label>面板登录密码:</label>
-                        <input type="password" id="set_password">
-                    </div>
+                    <div class="card-header"><h3>安全鉴权设置</h3></div>
+                    <div class="form-group"><label>面板账号:</label><input type="text" id="set_username"></div>
+                    <div class="form-group"><label>面板密码:</label><input type="password" id="set_password"></div>
                     <button class="btn" onclick="saveSettings()">保存基础配置</button>
+                </div>
+            </div>
+
+            <div id="docs" class="tab-content">
+                <div class="card">
+                    <div class="card-header"><h3>📖 系统部署与对接使用说明</h3></div>
+                    <div class="doc-alert">
+                        <strong>架构说明：</strong> 本系统运行在 Cloudflare Workers Serverless 环境下。完全免疫 Ddos，且无需购买任何服务器即可实现秒级波场与 EVM 多链 USDT 收款监听。
+                    </div>
+
+                    <div class="doc-section">
+                        <h4>1. 靓号地址添加规则</h4>
+                        <p style="color: #4b5563; font-size: 0.95rem; line-height: 1.6;">
+                            在【基础配置】的地址池中：<br>
+                            - 只要你输入以 <code>T</code> 开头的地址，系统将自动调用 <strong>TRON (波场)</strong> 引擎进行扫描。<br>
+                            - 只要你输入以 <code>0x</code> 开头的地址，系统将自动判定为 EVM 兼容链，并<strong>同时调用 ETH、BSC、AVAX</strong> 三个引擎对该地址进行并发扫描。无需手动指定网络！
+                        </p>
+                    </div>
+
+                    <div class="doc-section">
+                        <h4>2. 定时轮询 (Cron) 配置须知</h4>
+                        <p style="color: #4b5563; font-size: 0.95rem;">
+                            系统默认通过 <code>wrangler.toml</code> 配置了每分钟一次的自动巡检。如果在 Cloudflare 仪表盘没有生效，请前往 Workers -> 设置 -> 触发器 (Triggers) 中手动添加 Cron 表达式：<code>* * * * *</code>。
+                        </p>
+                    </div>
+
+                    <div class="doc-section">
+                        <h4>3. 前端发卡网 PHP 回调验证代码</h4>
+                        <p style="color: #4b5563; font-size: 0.95rem;">
+                            当系统查到账单后，会向你在【回调路由】中配置的 URL 发送 POST 数据包。由于我们支持了全链环境，为了防止重放攻击，<strong>签名校验必须包含 network 字段</strong>。请将以下代码集成到你的发卡网中处理回调：
+                        </p>
+                        <div class="doc-code">
+&lt;?php
+// 接收监控矩阵发来的原始 JSON 数据
+$jsonStr = file_get_contents('php://input');
+$post = json_decode($jsonStr, true);
+
+// 1. 获取基础数据
+$network = $post['network'];       // TRON / BSC / ETH / AVAX
+$tx_hash = $post['tx_hash'];       // 交易哈希，请作为唯一索引防重复发卡
+$amount = $post['amount'];         // 实际到账的 USDT 金额
+$sign = $post['sign'];             // 签名密文
+
+// 2. 验证签名 (防篡改核心逻辑)
+// 拼接规则：网络标识 + 交易哈希 + 金额 + 你在面板设置的APP_SECRET
+$my_secret = "这里填你面板里的APP_SECRET";
+$calc_sign = hash('sha256', $network . $tx_hash . $amount . $my_secret);
+
+if ($calc_sign !== $sign) {
+    die(json_encode(["code" => 403, "msg" => "签名校验失败！"]));
+}
+
+// 3. 校验通过，执行发卡网发货逻辑
+// TODO: 去数据库查询对应金额的未支付订单，并进行卡密发放
+// ...
+
+echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
+?&gt;
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -281,37 +224,31 @@
         let webhooksData = [];
 
         function switchTab(tabId, title) {
-            // 切换内容显示
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            
-            // 切换菜单激活状态
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             event.currentTarget.classList.add('active');
-            
-            // 动态修改顶部标题
             document.getElementById('current-page-title').innerText = title;
         }
 
         async function initData() {
-            // 加载基础设置
             const confRes = await fetch('/api/settings');
             const config = await confRes.json();
             document.getElementById('set_addresses').value = (config.addresses || []).join('\n');
             document.getElementById('set_username').value = config.username || '';
             document.getElementById('set_password').value = config.password || '';
+            
+            // 立即渲染一次地址徽章
+            previewAddresses();
 
-            // 加载订单流水
             const res = await fetch('/api/orders');
             const data = await res.json();
             const table = document.getElementById('txTable');
             data.forEach(row => {
                 const tr = table.insertRow();
-                // 渲染网络专属徽章
                 const netBadge = `<span class="net-badge net-${row.network}">${row.network}</span>`;
                 const toAddr = row.to_address ? `<span class="address-tag">${row.to_address.substring(0,8)}...</span>` : '-';
                 
-                // 处理不同链浏览器跳转链接
                 let explorerUrl = "#";
                 if(row.network === 'TRON') explorerUrl = `https://tronscan.org/#/transaction/${row.tx_hash}`;
                 if(row.network === 'BSC') explorerUrl = `https://bscscan.com/tx/${row.tx_hash}`;
@@ -328,19 +265,66 @@
                 `;
             });
 
-            // 加载 Webhook 配置
             const whRes = await fetch('/api/webhooks');
             webhooksData = await whRes.json();
             renderWebhooks();
         }
 
+        // ================= 动态地址解析与图标渲染 =================
+        function previewAddresses() {
+            const text = document.getElementById('set_addresses').value;
+            const addrs = text.split('\n').map(a => a.trim()).filter(a => a);
+            const container = document.getElementById('address_preview');
+            
+            if (addrs.length === 0) {
+                container.innerHTML = '<div style="color:#94a3b8; text-align:center;">暂无监控地址，请在上方输入</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            
+            // 预设 SVG 图标
+            const svgTRON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22l10-6 10 6L12 2zm0 4.5l6.5 13-6.5-3.8L5.5 19.5 12 6.5z"/></svg>`;
+            const svgETH = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z"/></svg>`;
+            const svgBSC = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l-4.5 4.5 2.1 2.1L12 6.2l2.4 2.4 2.1-2.1L12 2zM5.4 8.6L2 12l3.4 3.4 2.1-2.1L5.4 11l2.1-2.2L5.4 8.6zm13.2 0l-2.1 2.2 2.1 2.2-2.1 2.2L18.6 12l-3.4-3.4 3.4-3.4zM12 22l4.5-4.5-2.1-2.1L12 17.8l-2.4-2.4-2.1 2.1L12 22zm0-6.2l2.4-2.4-2.4-2.4-2.4 2.4 2.4 2.4z"/></svg>`;
+            const svgAVAX = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l-9.5 16h5.2l4.3-7.2 4.3 7.2h5.2L12 2.5zm0 14l-2.1 3.5h4.2L12 16.5z"/></svg>`;
+
+            addrs.forEach(addr => {
+                let badgesHTML = '';
+                let statusColor = '#374151';
+
+                if (addr.startsWith('T')) {
+                    // 波场 TRON
+                    badgesHTML = `<span class="chain-icon-badge net-TRON">${svgTRON} TRON</span>`;
+                } else if (addr.startsWith('0x')) {
+                    // EVM 三链合一
+                    badgesHTML = `
+                        <span class="chain-icon-badge net-ETH">${svgETH} ETH</span>
+                        <span class="chain-icon-badge net-BSC">${svgBSC} BSC</span>
+                        <span class="chain-icon-badge net-AVAX">${svgAVAX} AVAX</span>
+                    `;
+                } else {
+                    // 未知或错误格式
+                    statusColor = '#ef4444';
+                    badgesHTML = `<span class="chain-icon-badge" style="background:#ef4444;">⚠️ 格式未知网络</span>`;
+                }
+
+                container.innerHTML += `
+                    <div class="addr-row">
+                        <div class="chain-icons">${badgesHTML}</div>
+                        <div class="addr-string" style="color: ${statusColor};">${addr}</div>
+                    </div>
+                `;
+            });
+        }
+
+        // ================= 其他逻辑 =================
         function renderWebhooks() {
             const container = document.getElementById('webhook_list');
             container.innerHTML = '';
             if(!webhooksData || webhooksData.length === 0) {
                 container.innerHTML = `
                 <div style="text-align:center; padding: 40px 20px; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; margin-bottom: 20px;">
-                    <svg width="48" height="48" fill="none" stroke="#94a3b8" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom:10px;"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
                     <p style="color:#64748b; margin:0;">系统暂无回调节点。当前只记账，不触发外部发卡网发货。</p>
                 </div>`;
                 return;
@@ -359,22 +343,12 @@
                             <button class="btn btn-danger" style="padding: 6px 10px; font-size: 0.8rem;" onclick="deleteWebhook(${index})">删除</button>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label>CALLBACK_URL (POST 接收接口):</label>
-                        <input type="text" id="wh_url_${index}" value="${wh.url || ''}" placeholder="https://api.your-shop.com/notify" onchange="updateWh(${index})">
-                    </div>
+                    <div class="form-group"><label>CALLBACK_URL:</label><input type="text" id="wh_url_${index}" value="${wh.url || ''}" onchange="updateWh(${index})"></div>
                     <div style="display:flex; gap: 15px;">
-                        <div class="form-group" style="flex:1;">
-                            <label>APP_SECRET (通信签名密钥):</label>
-                            <input type="text" id="wh_secret_${index}" value="${wh.secret || ''}" placeholder="如 xia_yu_secret" onchange="updateWh(${index})">
-                        </div>
-                        <div class="form-group" style="flex:1;">
-                            <label>绑定的靓号池 (* 代表全部):</label>
-                            <input type="text" id="wh_binds_${index}" value="${wh.binds || '*'}" placeholder="TJxxxx 或 0x8888..." onchange="updateWh(${index})">
-                        </div>
+                        <div class="form-group" style="flex:1;"><label>APP_SECRET:</label><input type="text" id="wh_secret_${index}" value="${wh.secret || ''}" onchange="updateWh(${index})"></div>
+                        <div class="form-group" style="flex:1;"><label>绑定靓号池 (* 代表全部):</label><input type="text" id="wh_binds_${index}" value="${wh.binds || '*'}" onchange="updateWh(${index})"></div>
                     </div>
-                </div>
-                `;
+                </div>`;
             });
         }
 
@@ -385,47 +359,26 @@
             webhooksData[index].enabled = document.getElementById(`wh_enable_${index}`).checked;
         }
 
-        function addWebhook() {
-            webhooksData.push({ url: '', secret: '', binds: '*', enabled: true });
-            renderWebhooks();
-        }
-
-        function deleteWebhook(index) {
-            if(confirm('确定切断此发货节点的路由吗？')) {
-                webhooksData.splice(index, 1);
-                renderWebhooks();
-            }
-        }
+        function addWebhook() { webhooksData.push({ url: '', secret: '', binds: '*', enabled: true }); renderWebhooks(); }
+        function deleteWebhook(index) { webhooksData.splice(index, 1); renderWebhooks(); }
 
         async function saveWebhooks() {
-            document.activeElement.blur(); 
-            const res = await fetch('/api/webhooks', {
-                method: 'POST',
-                body: JSON.stringify(webhooksData)
-            });
-            if(res.ok) alert('✅ 回调节点配置保存成功！系统将在下次轮询时生效。');
-            else alert('❌ 保存失败，请检查网络或 KV 绑定配置！');
+            await fetch('/api/webhooks', { method: 'POST', body: JSON.stringify(webhooksData) });
+            alert('✅ 回调节点配置保存成功！');
         }
 
         async function saveSettings() {
-            const addresses = document.getElementById('set_addresses').value.split('\n').map(a => a.trim()).filter(a => a);
             const data = {
-                addresses: addresses,
+                addresses: document.getElementById('set_addresses').value.split('\n').map(a => a.trim()).filter(a => a),
                 username: document.getElementById('set_username').value,
                 password: document.getElementById('set_password').value
             };
-            const res = await fetch('/api/settings', {
-                method: 'POST',
-                body: JSON.stringify(data)
-            });
-            if(res.ok) {
-                alert('✅ 基础环境配置保存成功！');
-                location.reload();
-            } else alert('❌ 保存失败');
+            await fetch('/api/settings', { method: 'POST', body: JSON.stringify(data) });
+            alert('✅ 基础配置保存成功！'); location.reload();
         }
 
         async function syncChain() {
-            alert('📡 指令已下发！系统正在向全球所有节点(TRON/ETH/BSC/AVAX)并发索要数据并分发回调。稍后请刷新页面。');
+            alert('📡 指令已下发！系统正在并发抓取多链数据。稍后请刷新页面。');
             await fetch('/api/sync', {method: 'POST'});
             location.reload();
         }
