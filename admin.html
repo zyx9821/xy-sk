@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>系统监控矩阵台</title>
+    <title>全链系统监控矩阵台</title>
     <style>
-        /* ================= 基础与全局变量 ================= */
+        /* ================= 基础与全局变量 (保留你原来的所有精美设计) ================= */
         :root {
             --primary: #3b82f6;       /* 主色调蓝 */
             --primary-hover: #2563eb;
@@ -138,10 +138,18 @@
         tr:last-child td { border-bottom: none; }
         tr:hover td { background-color: #f8fafc; }
         
+        /* 徽章与标签 */
         .address-tag { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-family: ui-monospace, monospace; }
         .hash-tag { color: var(--text-muted); text-decoration: none; font-family: ui-monospace, monospace; }
         .hash-tag:hover { color: var(--primary); text-decoration: underline; }
         .status-success { color: #10b981; font-weight: 600; background: #d1fae5; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; }
+
+        /* ================= 【新增】全链网络专属徽章样式 ================= */
+        .net-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.85em; font-weight: bold; color: white; display: inline-block; text-align: center; min-width: 45px;}
+        .net-TRON { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2); }
+        .net-BSC { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2); color: #fff;}
+        .net-ETH { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2); }
+        .net-AVAX { background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); box-shadow: 0 2px 4px rgba(225, 29, 72, 0.2); }
 
         /* 表单输入与按钮 */
         .btn { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.9rem; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
@@ -154,7 +162,7 @@
         .form-group label { display: block; margin-bottom: 8px; font-size: 0.9rem; font-weight: 500; color: var(--text-main); }
         .form-group input, .form-group textarea { width: 100%; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-family: ui-monospace, monospace; font-size: 0.9rem; transition: all 0.2s; outline: none; background: #f8fafc; }
         .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
-        .form-hint { font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; }
+        .form-hint { font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
 
         /* 开关控件 */
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; vertical-align: middle; }
@@ -174,15 +182,15 @@
             <span>●</span> 收款监控矩阵
         </div>
         <div class="nav-menu">
-            <div class="nav-item active" onclick="switchTab('transactions', '交易流水')">
+            <div class="nav-item active" onclick="switchTab('transactions', '全链交易流水')">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 交易流水 (Orders)
             </div>
-            <div class="nav-item" onclick="switchTab('webhooks', 'API与回调路由')">
+            <div class="nav-item" onclick="switchTab('webhooks', '发卡网 API 回调')">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 发卡网 API 回调
             </div>
-            <div class="nav-item" onclick="switchTab('settings', '系统基础设置')">
+            <div class="nav-item" onclick="switchTab('settings', '全网监控环境设置')">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 基础环境配置
             </div>
@@ -191,7 +199,7 @@
 
     <div class="main-wrapper">
         <div class="top-header">
-            <div class="header-title" id="current-page-title">交易流水 (Orders)</div>
+            <div class="header-title" id="current-page-title">全链交易流水 (Orders)</div>
             <div class="header-user">
                 <div class="avatar">A</div>
                 Admin (夏雨在线)
@@ -203,12 +211,19 @@
             <div id="transactions" class="tab-content active">
                 <div class="card">
                     <div class="card-header">
-                        <h3>链上入账记录 (TRC20-USDT)</h3>
-                        <button class="btn" onclick="syncChain()">⚡ 强制触发展发</button>
+                        <h3>全链入账记录 (波场/以太坊/币安/雪崩)</h3>
+                        <button class="btn" onclick="syncChain()">⚡ 强制全网扫描</button>
                     </div>
                     <div class="table-container">
                         <table id="txTable">
-                            <tr><th>交易哈希</th><th>收款靓号 (To)</th><th>金额 (USDT)</th><th>系统时间 (Asia/Shanghai)</th><th>状态</th></tr>
+                            <tr>
+                                <th>处理网络</th>
+                                <th>交易哈希</th>
+                                <th>收款靓号 (To)</th>
+                                <th>金额 (USDT)</th>
+                                <th>系统时间 (Asia/Shanghai)</th>
+                                <th>状态</th>
+                            </tr>
                         </table>
                     </div>
                 </div>
@@ -231,12 +246,15 @@
             <div id="settings" class="tab-content">
                 <div class="card">
                     <div class="card-header">
-                        <h3>全局波场监控池</h3>
+                        <h3>全局地址监控池 (智能路由)</h3>
                     </div>
                     <div class="form-group">
-                        <label>监控地址簿 (支持无限追加):</label>
-                        <textarea id="set_addresses" rows="5" placeholder="输入波场极品靓号，每行一个..."></textarea>
-                        <div class="form-hint">Cloudflare Workers 会在后台定时巡检这些地址。</div>
+                        <label>监控地址簿 (支持多链自动识别):</label>
+                        <textarea id="set_addresses" rows="6" placeholder="输入波场或 EVM 极品靓号，每行一个...&#10;✅ T 开头的靓号：自动走 TRON 网络监控&#10;✅ 0x 开头的靓号：自动并行走 ETH / BSC / AVAX 三条网络监控"></textarea>
+                        <div class="form-hint">
+                            <strong>智能引擎机制：</strong>系统会自动根据你输入的地址前缀判断所处的区块链。<br>
+                            如果你输入了一个 <code>0x</code> 开头的地址，引擎将自动兵分三路，同时帮你扫描以太坊、币安链和雪崩链上的资产变动。
+                        </div>
                     </div>
                 </div>
 
@@ -289,9 +307,20 @@
             const table = document.getElementById('txTable');
             data.forEach(row => {
                 const tr = table.insertRow();
+                // 渲染网络专属徽章
+                const netBadge = `<span class="net-badge net-${row.network}">${row.network}</span>`;
                 const toAddr = row.to_address ? `<span class="address-tag">${row.to_address.substring(0,8)}...</span>` : '-';
+                
+                // 处理不同链浏览器跳转链接
+                let explorerUrl = "#";
+                if(row.network === 'TRON') explorerUrl = `https://tronscan.org/#/transaction/${row.tx_hash}`;
+                if(row.network === 'BSC') explorerUrl = `https://bscscan.com/tx/${row.tx_hash}`;
+                if(row.network === 'ETH') explorerUrl = `https://etherscan.io/tx/${row.tx_hash}`;
+                if(row.network === 'AVAX') explorerUrl = `https://snowtrace.io/tx/${row.tx_hash}`;
+
                 tr.innerHTML = `
-                    <td><a href="https://tronscan.org/#/transaction/${row.tx_hash}" target="_blank" class="hash-tag">${row.tx_hash.substring(0,10)}...</a></td>
+                    <td>${netBadge}</td>
+                    <td><a href="${explorerUrl}" target="_blank" class="hash-tag">${row.tx_hash.substring(0,10)}...</a></td>
                     <td>${toAddr}</td>
                     <td><strong style="color:#e67e22; font-size:1.1em;">${row.amount}</strong></td>
                     <td><span style="color:var(--text-muted)">${new Date(row.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}</span></td>
@@ -341,7 +370,7 @@
                         </div>
                         <div class="form-group" style="flex:1;">
                             <label>绑定的靓号池 (* 代表全部):</label>
-                            <input type="text" id="wh_binds_${index}" value="${wh.binds || '*'}" placeholder="TJxxxx, TYxxxx" onchange="updateWh(${index})">
+                            <input type="text" id="wh_binds_${index}" value="${wh.binds || '*'}" placeholder="TJxxxx 或 0x8888..." onchange="updateWh(${index})">
                         </div>
                     </div>
                 </div>
@@ -396,7 +425,7 @@
         }
 
         async function syncChain() {
-            alert('📡 指令已下发！正在通知 Worker 引擎抓取波场链上数据并分发回调。稍后请刷新页面。');
+            alert('📡 指令已下发！系统正在向全球所有节点(TRON/ETH/BSC/AVAX)并发索要数据并分发回调。稍后请刷新页面。');
             await fetch('/api/sync', {method: 'POST'});
             location.reload();
         }
