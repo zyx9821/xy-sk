@@ -91,6 +91,9 @@
             <div class="nav-item" onclick="switchTab('webhooks', '发卡网 API 回调')">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> 回调路由
             </div>
+            <div class="nav-item" onclick="switchTab('addresses', '收款地址管理')">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> 收款地址
+            </div>
             <div class="nav-item" onclick="switchTab('settings', '全网收款地址池与设置')">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> 基础配置
             </div>
@@ -134,21 +137,50 @@
                 <button class="btn" onclick="saveWebhooks()" style="width: 100%; padding: 14px; font-size: 1rem; margin-top: 10px;">💾 保存并应用回调路由</button>
             </div>
 
-            <div id="settings" class="tab-content">
-                <div class="card">
-                    <div class="card-header"><h3>全局地址监控池</h3></div>
-                    <div class="form-group">
-                        <label>监控地址簿编辑区 (每行一个):</label>
-                        <textarea id="set_addresses" rows="5" placeholder="在此处粘贴波场或 EVM 极品靓号..." oninput="previewAddresses()"></textarea>
-                        <div class="form-hint">💡 提示：系统采用动态引擎识别。直接在此输入，下方会自动解析并激活对应链的监控。</div>
+            <div id="addresses" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3>全网收款地址列表</h3>
+                    <button class="btn btn-success" onclick="document.getElementById('add_address_form').style.display='block'">+ 增加地址</button>
+                </div>
+                
+                <div id="add_address_form" style="display:none; background:#f8fafc; padding:20px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:20px;">
+                    <div style="display:flex; gap:15px; margin-bottom:15px;">
+                        <div style="flex:1;"><label style="font-size:0.9rem;">网络/名称</label><input type="text" id="new_addr_name" placeholder="如: 波场主钱包" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                        <div style="flex:2;"><label style="font-size:0.9rem;">钱包地址</label><input type="text" id="new_addr_val" placeholder="输入 T 或 0x 开头的地址" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                     </div>
-                    
-                    <label style="font-weight: 500; font-size: 0.95rem; color: var(--text-main);">已激活的监控矩阵节点：</label>
-                    <div id="address_preview" class="preview-container">
-                        <div style="color: #94a3b8; text-align: center; font-size: 0.9rem;">上方输入地址后，这里将生成网络路由卡片</div>
+                    <div style="display:flex; gap:15px; margin-bottom:15px;">
+                        <div style="flex:1;"><label style="font-size:0.9rem;">图标链接 (选填)</label><input type="text" id="new_addr_icon" placeholder="https://..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                        <div style="flex:2;"><label style="font-size:0.9rem;">备注 (选填)</label><input type="text" id="new_addr_remark" placeholder="内部备注信息" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                    </div>
+                    <div style="text-align:right;">
+                        <button class="btn" style="background:#94a3b8; margin-right:10px;" onclick="document.getElementById('add_address_form').style.display='none'">取消</button>
+                        <button class="btn btn-success" onclick="submitNewAddress()">确认保存</button>
                     </div>
                 </div>
+                <div class="table-container">
+                    <table id="addressTable">
+                        <thead>
+                            <tr>
+                                <th>序数ID</th>
+                                <th>图标/图片</th>
+                                <th>名称</th>
+                                <th>地址</th>
+                                <th>添加日期</th>
+                                <th>备注</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="address_list_body">
+                            <tr><td colspan="7" style="text-align:center; color:#94a3b8;">暂无收款地址，请点击右上角增加</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
+            <div id="settings" class="tab-content">
+                
                 <div class="card">
                     <div class="card-header"><h3>安全鉴权设置</h3></div>
                     <div class="form-group"><label>面板账号:</label><input type="text" id="set_username"></div>
@@ -234,12 +266,10 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
         async function initData() {
             const confRes = await fetch('/api/settings');
             const config = await confRes.json();
-            document.getElementById('set_addresses').value = (config.addresses || []).join('\n');
             document.getElementById('set_username').value = config.username || '';
             document.getElementById('set_password').value = config.password || '';
-            
-            // 立即渲染一次地址徽章
-            previewAddresses();
+            // 拉取 D1 数据库中的收款地址
+            loadAddresses();
 
             const res = await fetch('/api/orders');
             const data = await res.json();
@@ -268,54 +298,6 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             const whRes = await fetch('/api/webhooks');
             webhooksData = await whRes.json();
             renderWebhooks();
-        }
-
-        // ================= 动态地址解析与图标渲染 =================
-        function previewAddresses() {
-            const text = document.getElementById('set_addresses').value;
-            const addrs = text.split('\n').map(a => a.trim()).filter(a => a);
-            const container = document.getElementById('address_preview');
-            
-            if (addrs.length === 0) {
-                container.innerHTML = '<div style="color:#94a3b8; text-align:center;">暂无监控地址，请在上方输入</div>';
-                return;
-            }
-
-            container.innerHTML = '';
-            
-            // 预设 SVG 图标
-            const svgTRON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22l10-6 10 6L12 2zm0 4.5l6.5 13-6.5-3.8L5.5 19.5 12 6.5z"/></svg>`;
-            const svgETH = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 17.97L4.58 13.62 11.943 24l7.37-10.38-7.372 4.35h.003zM12.056 0L4.69 12.223l7.365 4.354 7.365-4.35L12.056 0z"/></svg>`;
-            const svgBSC = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l-4.5 4.5 2.1 2.1L12 6.2l2.4 2.4 2.1-2.1L12 2zM5.4 8.6L2 12l3.4 3.4 2.1-2.1L5.4 11l2.1-2.2L5.4 8.6zm13.2 0l-2.1 2.2 2.1 2.2-2.1 2.2L18.6 12l-3.4-3.4 3.4-3.4zM12 22l4.5-4.5-2.1-2.1L12 17.8l-2.4-2.4-2.1 2.1L12 22zm0-6.2l2.4-2.4-2.4-2.4-2.4 2.4 2.4 2.4z"/></svg>`;
-            const svgAVAX = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l-9.5 16h5.2l4.3-7.2 4.3 7.2h5.2L12 2.5zm0 14l-2.1 3.5h4.2L12 16.5z"/></svg>`;
-
-            addrs.forEach(addr => {
-                let badgesHTML = '';
-                let statusColor = '#374151';
-
-                if (addr.startsWith('T')) {
-                    // 波场 TRON
-                    badgesHTML = `<span class="chain-icon-badge net-TRON">${svgTRON} TRON</span>`;
-                } else if (addr.startsWith('0x')) {
-                    // EVM 三链合一
-                    badgesHTML = `
-                        <span class="chain-icon-badge net-ETH">${svgETH} ETH</span>
-                        <span class="chain-icon-badge net-BSC">${svgBSC} BSC</span>
-                        <span class="chain-icon-badge net-AVAX">${svgAVAX} AVAX</span>
-                    `;
-                } else {
-                    // 未知或错误格式
-                    statusColor = '#ef4444';
-                    badgesHTML = `<span class="chain-icon-badge" style="background:#ef4444;">⚠️ 格式未知网络</span>`;
-                }
-
-                container.innerHTML += `
-                    <div class="addr-row">
-                        <div class="chain-icons">${badgesHTML}</div>
-                        <div class="addr-string" style="color: ${statusColor};">${addr}</div>
-                    </div>
-                `;
-            });
         }
 
         // ================= 其他逻辑 =================
@@ -369,7 +351,6 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
 
         async function saveSettings() {
             const data = {
-                addresses: document.getElementById('set_addresses').value.split('\n').map(a => a.trim()).filter(a => a),
                 username: document.getElementById('set_username').value,
                 password: document.getElementById('set_password').value
             };
@@ -381,6 +362,58 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             alert('📡 指令已下发！系统正在并发抓取多链数据。稍后请刷新页面。');
             await fetch('/api/sync', {method: 'POST'});
             location.reload();
+        }
+        // ================= 收款地址 CRUD 逻辑 =================
+        async function loadAddresses() {
+            try {
+                const res = await fetch('/api/addresses');
+                const list = await res.json();
+                const tbody = document.getElementById('address_list_body');
+                tbody.innerHTML = '';
+                
+                if (list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94a3b8;">暂无收款地址，请点击右上角增加</td></tr>';
+                    return;
+                }
+
+                list.forEach(item => {
+                    const iconHtml = item.icon ? `<img src="${item.icon}" style="width:24px; height:24px; border-radius:50%;">` : '无';
+                    const timeStr = new Date(item.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'});
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>#${item.id}</td>
+                            <td>${iconHtml}</td>
+                            <td style="font-weight:500;">${item.name}</td>
+                            <td style="font-family:monospace; color:#0284c7;">${item.address}</td>
+                            <td style="font-size:0.85em; color:var(--text-muted);">${timeStr}</td>
+                            <td>${item.remark || '-'}</td>
+                            <td><button class="btn btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteAddress(${item.id})">删除</button></td>
+                        </tr>
+                    `;
+                });
+            } catch (e) { console.error("加载地址失败", e); }
+        }
+
+        async function submitNewAddress() {
+            const data = {
+                name: document.getElementById('new_addr_name').value.trim(),
+                address: document.getElementById('new_addr_val').value.trim(),
+                icon: document.getElementById('new_addr_icon').value.trim(),
+                remark: document.getElementById('new_addr_remark').value.trim()
+            };
+            if (!data.name || !data.address) return alert("名称和地址为必填项！");
+            
+            await fetch('/api/addresses', { method: 'POST', body: JSON.stringify(data) });
+            document.getElementById('add_address_form').style.display = 'none';
+            // 清空表单
+            ['new_addr_name', 'new_addr_val', 'new_addr_icon', 'new_addr_remark'].forEach(id => document.getElementById(id).value = '');
+            loadAddresses(); // 重新渲染表格
+        }
+
+        async function deleteAddress(id) {
+            if (!confirm(`确定要删除 ID 为 ${id} 的监控地址吗？`)) return;
+            await fetch(`/api/addresses?id=${id}`, { method: 'DELETE' });
+            loadAddresses();
         }
 
         initData();
