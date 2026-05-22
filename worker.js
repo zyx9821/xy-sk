@@ -92,11 +92,28 @@ export default {
         }
 
         if (url.pathname === "/api/webhooks") {
+            if (request.method === "GET") {
+                const { results } = await env.db.prepare("SELECT * FROM webhooks ORDER BY created_at DESC").all();
+                return new Response(JSON.stringify(results), { headers: { "Content-Type": "application/json" } });
+            }
             if (request.method === "POST") {
-                await env.kv.put("webhook_configs", JSON.stringify(await request.json()));
+                const data = await request.json();
+                await env.db.prepare("INSERT INTO webhooks (name, url, secret, binds, icon, remark) VALUES (?, ?, ?, ?, ?, ?)").bind(data.name, data.url, data.secret, data.binds, data.icon, data.remark).run();
                 return new Response(JSON.stringify({ success: true }));
             }
-            return new Response(await env.kv.get("webhook_configs") || "[]", { headers: { "Content-Type": "application/json" } });
+            if (request.method === "DELETE") {
+                const urlObj = new URL(request.url);
+                const id = urlObj.searchParams.get("id");
+                await env.db.prepare("DELETE FROM webhooks WHERE id = ?").bind(id).run();
+                return new Response(JSON.stringify({ success: true }));
+            }
+            if (request.method === "PUT") {
+                const urlObj = new URL(request.url);
+                const id = urlObj.searchParams.get("id");
+                const status = urlObj.searchParams.get("status") === "1" ? 1 : 0;
+                await env.db.prepare("UPDATE webhooks SET enabled = ? WHERE id = ?").bind(status, id).run();
+                return new Response(JSON.stringify({ success: true }));
+            }
         }
 
         // 手动触发全链同步
@@ -123,7 +140,8 @@ export default {
             const addresses = results.map(row => row.address).filter(a => a);
             if (addresses.length === 0) return;
 
-            const webhooks = JSON.parse(await env.kv.get("webhook_configs") || "[]");
+            // 从 D1 关系型数据库提取当前处于激活状态(enabled=1)的外部业务回调路由节点
+            const { results: webhooks } = await env.db.prepare("SELECT * FROM webhooks WHERE enabled = 1").all();
 
             // 地址分类路由
             const tronAddrs = addresses.filter(a => a.startsWith("T"));
