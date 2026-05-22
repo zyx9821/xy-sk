@@ -11,3 +11,13 @@ CREATE TABLE orders (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (tx_hash, network)
 );
+
+DROP TABLE IF EXISTS addresses;
+CREATE TABLE addresses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    address TEXT NOT NULL UNIQUE,
+    icon TEXT,
+    remark TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
