@@ -59,18 +59,35 @@ export default {
             const { results } = await env.db.prepare("SELECT * FROM orders ORDER BY created_at DESC LIMIT 100").all();
             return new Response(JSON.stringify(results), { headers: { "Content-Type": "application/json" } });
         }
+        // --- 新增：收款地址 CRUD 接口 ---
+        if (url.pathname === "/api/addresses") {
+            if (request.method === "GET") {
+                const { results } = await env.db.prepare("SELECT * FROM addresses ORDER BY created_at DESC").all();
+                return new Response(JSON.stringify(results), { headers: { "Content-Type": "application/json" } });
+            }
+            if (request.method === "POST") {
+                const data = await request.json();
+                await env.db.prepare("INSERT INTO addresses (name, address, icon, remark) VALUES (?, ?, ?, ?)").bind(data.name, data.address, data.icon, data.remark).run();
+                return new Response(JSON.stringify({ success: true }));
+            }
+            if (request.method === "DELETE") {
+                const urlObj = new URL(request.url);
+                const id = urlObj.searchParams.get("id");
+                await env.db.prepare("DELETE FROM addresses WHERE id = ?").bind(id).run();
+                return new Response(JSON.stringify({ success: true }));
+            }
+        }
 
         if (url.pathname === "/api/settings") {
             if (request.method === "POST") {
                 const data = await request.json();
-                if (data.addresses) await env.kv.put("monitor_addresses", JSON.stringify(data.addresses));
                 if (data.username) await env.kv.put("admin_username", data.username);
                 if (data.password) await env.kv.put("admin_password", data.password);
                 return new Response(JSON.stringify({ success: true }));
             }
             return new Response(JSON.stringify({
-                addresses: JSON.parse(await env.kv.get("monitor_addresses") || "[]"),
-                username: await env.kv.get("admin_username"), password: await env.kv.get("admin_password")
+                username: await env.kv.get("admin_username"), 
+                password: await env.kv.get("admin_password")
             }), { headers: { "Content-Type": "application/json" } });
         }
 
@@ -101,8 +118,9 @@ export default {
     // ==========================================
     async syncAllChainsData(env) {
         try {
-            const addrsStr = await env.kv.get("monitor_addresses");
-            const addresses = JSON.parse(addrsStr || "[]").filter(a => a && !a.includes("输入"));
+            // 从 D1 数据库动态提取所有已激活的监控地址
+            const { results } = await env.db.prepare("SELECT address FROM addresses").all();
+            const addresses = results.map(row => row.address).filter(a => a);
             if (addresses.length === 0) return;
 
             const webhooks = JSON.parse(await env.kv.get("webhook_configs") || "[]");
