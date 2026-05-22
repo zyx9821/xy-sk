@@ -21,3 +21,16 @@ CREATE TABLE addresses (
     remark TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+DROP TABLE IF EXISTS webhooks;
+CREATE TABLE webhooks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    secret TEXT NOT NULL,
+    binds TEXT DEFAULT '*',
+    icon TEXT,
+    remark TEXT,
+    enabled INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
