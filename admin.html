@@ -126,15 +126,67 @@
             </div>
 
             <div id="webhooks" class="tab-content">
-                <div class="card-header" style="margin-bottom: 20px;">
-                    <div>
-                        <h3 style="margin:0;">发卡网异步回调引擎</h3>
-                        <div class="form-hint">当监测到入账时，系统会向外部发卡网发送 POST 请求触发发货。支持多站分离。</div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>发卡网异步回调路由列表</h3>
+                        <button class="btn btn-success" onclick="document.getElementById('add_webhook_form').style.display='block'">+ 增加回调节点</button>
                     </div>
-                    <button class="btn btn-success" onclick="addWebhook()">+ 新增业务节点</button>
+                    
+                    <div id="add_webhook_form" style="display:none; background:#f8fafc; padding:20px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:20px;">
+                        <div style="display:flex; gap:15px; margin-bottom:15px;">
+                            <div style="flex:1;"><label style="font-size:0.9rem;">节点名称</label><input type="text" id="new_wh_name" placeholder="如: 官方发卡网" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                            <div style="flex:2;"><label style="font-size:0.9rem;">CALLBACK_URL</label><input type="text" id="new_wh_url" placeholder="https://yourdomain.com/callback.php" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                        </div>
+                        <div style="display:flex; gap:15px; margin-bottom:15px;">
+                            <div style="flex:1;"><label style="font-size:0.9rem;">APP_SECRET</label><input type="text" id="new_wh_secret" placeholder="通讯密钥密文" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                            <div style="flex:1;"><label style="font-size:0.9rem;">绑定靓号池 (*代表全部)</label><input type="text" id="new_wh_binds" value="*" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                        </div>
+                        <div style="display:flex; gap:15px; margin-bottom:15px;">
+                            <div style="flex:1;"><label style="font-size:0.9rem;">图标链接 (选填)</label><input type="text" id="new_wh_icon" placeholder="https://..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                            <div style="flex:2;"><label style="font-size:0.9rem;">备注 (选填)</label><input type="text" id="new_wh_remark" placeholder="节点业务内部备注信息" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                        </div>
+                        <div style="text-align:right;">
+                            <button class="btn" style="background:#94a3b8; margin-right:10px;" onclick="document.getElementById('add_webhook_form').style.display='none'">取消</button>
+                            <button class="btn btn-success" onclick="submitNewWebhook()">确认保存</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="webhookTable">
+                            <thead>
+                                <tr>
+                                    <th>节点序数ID</th>
+                                    <th>图标/图片</th>
+                                    <th>名称</th>
+                                    <th>CALLBACK_URL</th>
+                                    <th>APP_SECRET</th>
+                                    <th>绑定靓号池</th>
+                                    <th>添加日期</th>
+                                    <th>备注</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="webhook_list_body">
+                                <tr><td colspan="10" style="text-align:center; color:#94a3b8;">暂无回调路由，请点击右上角增加</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; border-left: 4px solid var(--primary);">
+                        <h4 style="margin-top:0; color:var(--text-main); font-size:1rem;">💡 回调路由参数说明：</h4>
+                        <ul style="font-size: 0.85rem; color: #4b5563; line-height: 1.8; padding-left: 20px; margin-bottom:0;">
+                            <li><strong>节点序数ID：</strong>系统 D1 数据库主键自动递增生成的唯一节点序列号，无法篡改。</li>
+                            <li><strong>图标/图片：</strong>节点的视觉徽标链接（例如各发卡站的小图标），直观区分不同的分发终端。</li>
+                            <li><strong>名称：</strong>自定义的业务系统代号。如“发卡A站”、“测试分流端”，方便多商户环境下的分类辨识。</li>
+                            <li><strong>CALLBACK_URL：</strong>外部接收充值入账通知的网关 API 接口。当链上扫出新订单时，系统会向此地址发送异步 <code>POST</code> 核心请求。</li>
+                            <li><strong>APP_SECRET：</strong>通讯层加密签名密钥。系统通过哈希算法将订单要素与该密钥拼接。外部接收端必须持有相同密钥进行哈希对比验签，防止非法伪造回调。</li>
+                            <li><strong>绑定靓号池：</strong>路由过滤器。可限定该节点仅接收指定收款地址的通知（支持英文逗号分隔多地址）；若填写 <code>*</code> 则不作筛选，默认分发所有收款地址的所有流水。</li>
+                            <li><strong>添加日期：</strong>该路由规则进入系统的初始化时刻，系统自动锁定并转换为 Asia/Shanghai 标准时间。</li>
+                            <li><strong>备注：</strong>面向管理员的补充注释区，可备注对接负责人、结算账期等附加文本。</li>
+                        </ul>
+                    </div>
                 </div>
-                <div id="webhook_list"></div>
-                <button class="btn" onclick="saveWebhooks()" style="width: 100%; padding: 14px; font-size: 1rem; margin-top: 10px;">💾 保存并应用回调路由</button>
             </div>
 
             <div id="addresses" class="tab-content">
@@ -253,7 +305,6 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
     </div>
 
     <script>
-        let webhooksData = [];
 
         function switchTab(tabId, title) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -295,73 +346,78 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
                 `;
             });
 
-            const whRes = await fetch('/api/webhooks');
-            webhooksData = await whRes.json();
-            renderWebhooks();
+            // 异步加载数据库中的全新回调路由列表
+            loadWebhooks();
         }
 
-        // ================= 其他逻辑 =================
-        function renderWebhooks() {
-            const container = document.getElementById('webhook_list');
-            container.innerHTML = '';
-            if(!webhooksData || webhooksData.length === 0) {
-                container.innerHTML = `
-                <div style="text-align:center; padding: 40px 20px; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; margin-bottom: 20px;">
-                    <p style="color:#64748b; margin:0;">系统暂无回调节点。当前只记账，不触发外部发卡网发货。</p>
-                </div>`;
-                return;
-            }
+        // ================= 回调路由 CRUD 逻辑 =================
+        async function loadWebhooks() {
+            try {
+                const res = await fetch('/api/webhooks');
+                const list = await res.json();
+                const tbody = document.getElementById('webhook_list_body');
+                tbody.innerHTML = '';
+                
+                if (list.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#94a3b8;">暂无回调路由，请点击右上角增加</td></tr>';
+                    return;
+                }
 
-            webhooksData.forEach((wh, index) => {
-                container.innerHTML += `
-                <div class="card webhook-card">
-                    <div class="card-header" style="margin-bottom: 15px;">
-                        <h3 style="font-size: 1rem;">节点 #${index + 1}</h3>
-                        <div style="display:flex; align-items:center; gap: 15px;">
-                            <label class="switch">
-                                <input type="checkbox" id="wh_enable_${index}" ${wh.enabled ? 'checked' : ''} onchange="updateWh(${index})">
-                                <span class="slider"></span>
-                            </label>
-                            <button class="btn btn-danger" style="padding: 6px 10px; font-size: 0.8rem;" onclick="deleteWebhook(${index})">删除</button>
-                        </div>
-                    </div>
-                    <div class="form-group"><label>CALLBACK_URL:</label><input type="text" id="wh_url_${index}" value="${wh.url || ''}" onchange="updateWh(${index})"></div>
-                    <div style="display:flex; gap: 15px;">
-                        <div class="form-group" style="flex:1;"><label>APP_SECRET:</label><input type="text" id="wh_secret_${index}" value="${wh.secret || ''}" onchange="updateWh(${index})"></div>
-                        <div class="form-group" style="flex:1;"><label>绑定靓号池 (* 代表全部):</label><input type="text" id="wh_binds_${index}" value="${wh.binds || '*'}" onchange="updateWh(${index})"></div>
-                    </div>
-                </div>`;
-            });
+                list.forEach(item => {
+                    const iconHtml = item.icon ? `<img src="${item.icon}" style="width:24px; height:24px; border-radius:50%; object-fit:cover;">` : '无';
+                    const timeStr = new Date(item.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'});
+                    const statusChecked = item.enabled ? 'checked' : '';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>#${item.id}</td>
+                            <td>${iconHtml}</td>
+                            <td style="font-weight:500;">${item.name}</td>
+                            <td style="font-family:monospace; font-size:0.85em; color:#0284c7; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.url}">${item.url}</td>
+                            <td style="font-family:monospace; color:#e67e22;">${item.secret}</td>
+                            <td><span class="address-tag" style="font-size:0.8em; background:#f1f5f9; color:#475569;">${item.binds}</span></td>
+                            <td style="font-size:0.85em; color:var(--text-muted);">${timeStr}</td>
+                            <td style="color:var(--text-muted); font-size:0.85em;">${item.remark || '-'}</td>
+                            <td>
+                                <label class="switch">
+                                    <input type="checkbox" ${statusChecked} onchange="toggleWebhookStatus(${item.id}, this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                            </td>
+                            <td><button class="btn btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteWebhook(${item.id})">删除</button></td>
+                        </tr>
+                    `;
+                });
+            } catch (e) { console.error("加载回调失败", e); }
         }
 
-        function updateWh(index) {
-            webhooksData[index].url = document.getElementById(`wh_url_${index}`).value;
-            webhooksData[index].secret = document.getElementById(`wh_secret_${index}`).value;
-            webhooksData[index].binds = document.getElementById(`wh_binds_${index}`).value;
-            webhooksData[index].enabled = document.getElementById(`wh_enable_${index}`).checked;
-        }
-
-        function addWebhook() { webhooksData.push({ url: '', secret: '', binds: '*', enabled: true }); renderWebhooks(); }
-        function deleteWebhook(index) { webhooksData.splice(index, 1); renderWebhooks(); }
-
-        async function saveWebhooks() {
-            await fetch('/api/webhooks', { method: 'POST', body: JSON.stringify(webhooksData) });
-            alert('✅ 回调节点配置保存成功！');
-        }
-
-        async function saveSettings() {
+        async function submitNewWebhook() {
             const data = {
-                username: document.getElementById('set_username').value,
-                password: document.getElementById('set_password').value
+                name: document.getElementById('new_wh_name').value.trim(),
+                url: document.getElementById('new_wh_url').value.trim(),
+                secret: document.getElementById('new_wh_secret').value.trim(),
+                binds: document.getElementById('new_wh_binds').value.trim() || '*',
+                icon: document.getElementById('new_wh_icon').value.trim(),
+                remark: document.getElementById('new_wh_remark').value.trim()
             };
-            await fetch('/api/settings', { method: 'POST', body: JSON.stringify(data) });
-            alert('✅ 基础配置保存成功！'); location.reload();
+            if (!data.name || !data.url || !data.secret) return alert("名称、URL 和密钥为必填项！");
+            
+            await fetch('/api/webhooks', { method: 'POST', body: JSON.stringify(data) });
+            document.getElementById('add_webhook_form').style.display = 'none';
+            // 归位表单项
+            ['new_wh_name', 'new_wh_url', 'new_wh_secret', 'new_wh_binds', 'new_wh_icon', 'new_wh_remark'].forEach(id => {
+                document.getElementById(id).value = (id === 'new_wh_binds' ? '*' : '');
+            });
+            loadWebhooks();
         }
 
-        async function syncChain() {
-            alert('📡 指令已下发！系统正在并发抓取多链数据。稍后请刷新页面。');
-            await fetch('/api/sync', {method: 'POST'});
-            location.reload();
+        async function deleteWebhook(id) {
+            if (!confirm(`确定要彻底删除 ID 为 ${id} 的回调节点吗？`)) return;
+            await fetch(`/api/webhooks?id=${id}`, { method: 'DELETE' });
+            loadWebhooks();
+        }
+
+        async function toggleWebhookStatus(id, enabled) {
+            await fetch(`/api/webhooks?id=${id}&status=${enabled ? 1 : 0}`, { method: 'PUT' });
         }
         // ================= 收款地址 CRUD 逻辑 =================
         async function loadAddresses() {
@@ -414,6 +470,20 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             if (!confirm(`确定要删除 ID 为 ${id} 的监控地址吗？`)) return;
             await fetch(`/api/addresses?id=${id}`, { method: 'DELETE' });
             loadAddresses();
+        }
+        async function saveSettings() {
+            const data = {
+                username: document.getElementById('set_username').value,
+                password: document.getElementById('set_password').value
+            };
+            await fetch('/api/settings', { method: 'POST', body: JSON.stringify(data) });
+            alert('✅ 基础配置保存成功！'); location.reload();
+        }
+
+        async function syncChain() {
+            alert('📡 指令已下发！系统正在并发抓取多链数据。稍后请刷新页面。');
+            await fetch('/api/sync', {method: 'POST'});
+            location.reload();
         }
 
         initData();
