@@ -13,6 +13,7 @@
             --border: #e5e7eb;
         }
         body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        code { border-radius: 2px; background-color: #dce9ff; padding: 1px 6px; font-size: .7em; color: #e80073; letter-spacing: .5px; word-wrap: break-word; font-family: var; }
         
         /* 侧边栏与布局 */
         .sidebar { width: 260px; background: var(--bg-sidebar); display: flex; flex-direction: column; z-index: 10; box-shadow: 2px 0 8px rgba(0,0,0,0.1); }
@@ -179,7 +180,7 @@
                             <li><strong>节点序数ID：</strong>系统 D1 数据库主键自动递增生成的唯一节点序列号，无法篡改。</li>
                             <li><strong>图标/图片：</strong>节点的视觉徽标链接（例如各发卡站的小图标），直观区分不同的分发终端。</li>
                             <li><strong>名称：</strong>自定义的业务系统代号。如“发卡A站”、“测试分流端”，方便多商户环境下的分类辨识。</li>
-                            <li><strong>CALLBACK_URL：</strong>外部接收充值入账通知的网关 API 接口。当链上扫出新订单时，系统会向此地址发送异步 <code>POST</code> 核心请求。</li>
+                            <li><strong>CALLBACK_URL：</strong>外部接收充值入账通知的网关 API 接口<code>https://yourdomain.com/callback.php</code>。当链上扫出新订单时，系统会向此地址发送异步 <code>POST</code> 核心请求。</li>
                             <li><strong>APP_SECRET：</strong>通讯层加密签名密钥。系统通过哈希算法将订单要素与该密钥拼接。外部接收端必须持有相同密钥进行哈希对比验签，防止非法伪造回调。</li>
                             <li><strong>绑定靓号池：</strong>路由过滤器。可限定该节点仅接收指定收款地址的通知（支持英文逗号分隔多地址）；若填写 <code>*</code> 则不作筛选，默认分发所有收款地址的所有流水。</li>
                             <li><strong>添加日期：</strong>该路由规则进入系统的初始化时刻，系统自动锁定并转换为 Asia/Shanghai 标准时间。</li>
