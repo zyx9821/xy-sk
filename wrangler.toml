@@ -30,6 +30,7 @@ fallthrough = true
 # 【新增】开启 Cloudflare Workers 静态资源原生托管
 # ==========================================
 [assets]
-binding = "assets"       # 绑定静态资源服务
-directory = "."          # 将当前目录（包含 files 文件夹）全部上传
-run_worker_first = true  # 优先执行 Worker 内部的 API 路由
+binding = "assets"
+directory = "."
+run_worker_first = true
+fallthrough = true
