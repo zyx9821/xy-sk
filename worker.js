@@ -56,8 +56,33 @@ export default {
         if (url.pathname === "/dashboard") return new Response(dashboardHTML, { headers: { "Content-Type": "text/html;charset=UTF-8" } });
 
         if (url.pathname === "/api/orders") {
-            const { results } = await env.db.prepare("SELECT * FROM orders ORDER BY created_at DESC LIMIT 100").all();
-            return new Response(JSON.stringify(results), { headers: { "Content-Type": "application/json" } });
+            if (request.method === "GET") {
+                const { results } = await env.db.prepare("SELECT * FROM orders ORDER BY created_at DESC LIMIT 100").all();
+                return new Response(JSON.stringify(results), { headers: { "Content-Type": "application/json" } });
+            }
+            if (request.method === "DELETE") {
+                const urlObj = new URL(request.url);
+                const txHash = urlObj.searchParams.get("tx_hash");
+                const network = urlObj.searchParams.get("network");
+
+                // 单条删除判定
+                if (txHash && network) {
+                    await env.db.prepare("DELETE FROM orders WHERE tx_hash = ? AND network = ?").bind(txHash, network).run();
+                    return new Response(JSON.stringify({ success: true }));
+                } 
+                
+                // 批量删除判定
+                const body = await request.json();
+                if (body && body.items && Array.isArray(body.items)) {
+                    for (const item of body.items) {
+                        if (item.tx_hash && item.network) {
+                            await env.db.prepare("DELETE FROM orders WHERE tx_hash = ? AND network = ?").bind(item.tx_hash, item.network).run();
+                        }
+                    }
+                    return new Response(JSON.stringify({ success: true }));
+                }
+                return new Response(JSON.stringify({ success: false }), { status: 400 });
+            }
         }
         // --- 新增：收款地址 CRUD 接口 ---
         if (url.pathname === "/api/addresses") {
