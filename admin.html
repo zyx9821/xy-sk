@@ -183,7 +183,7 @@
                             <div style="flex:1;"><label style="font-size:0.9rem;">节点名称</label><input type="text" id="new_wh_name" placeholder="如: 官方发卡网" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                             <div style="flex:2;"><label style="font-size:0.9rem;">CALLBACK_URL</label><input type="text" id="new_wh_url" placeholder="https://yourdomain.com/callback.php" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                             <div style="flex:2;"><label style="font-size:0.9rem;">APP_SECRET</label><input type="text" id="new_wh_secret" placeholder="通讯密钥密文" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
-                            <div style="flex:2;"><label style="font-size:0.9rem;">绑定靓号池 (*代表全部)</label><input type="text" id="new_wh_binds" value="*" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                            <div style="flex:2;"><label style="font-size:0.9rem;">绑定地址 (按住 Ctrl/Cmd 多选)</label><select id="new_wh_binds" multiple style="width:100%; padding:4px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px; height: 85px; font-family: monospace; background: white;"><option value="*">[*] 接收所有地址回调</option></select></div>
                             <div style="flex:1;"><label style="font-size:0.9rem;">备注 (选填)</label><input type="text" id="new_wh_remark" placeholder="节点业务内部备注信息" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                         </div>
                         <div style="text-align:center;">
@@ -377,7 +377,13 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             if(type === 'address') { editAddressId = null; document.getElementById('add_address_form').style.display='none'; }
             ['new_wh_name', 'new_wh_url', 'new_wh_secret', 'new_wh_binds', 'new_wh_icon', 'new_wh_remark', 'new_addr_name', 'new_addr_val', 'new_addr_icon', 'new_addr_remark'].forEach(id => {
                 let el = document.getElementById(id);
-                if(el) el.value = (id === 'new_wh_binds' ? '*' : '');
+                if(el) {
+                    if (id === 'new_wh_binds') {
+                        Array.from(el.options).forEach(opt => opt.selected = (opt.value === '*'));
+                    } else {
+                        el.value = '';
+                    }
+                }
             });
         }
         
@@ -499,7 +505,7 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
                 name: document.getElementById('new_wh_name').value.trim(),
                 url: document.getElementById('new_wh_url').value.trim(),
                 secret: document.getElementById('new_wh_secret').value.trim(),
-                binds: document.getElementById('new_wh_binds').value.trim() || '*',
+                binds: Array.from(document.getElementById('new_wh_binds').selectedOptions).map(opt => opt.value).join(',') || '*',
                 icon: document.getElementById('new_wh_icon').value.trim(),
                 remark: document.getElementById('new_wh_remark').value.trim()
             };
@@ -521,7 +527,10 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             document.getElementById('new_wh_name').value = item.name;
             document.getElementById('new_wh_url').value = item.url;
             document.getElementById('new_wh_secret').value = item.secret;
-            document.getElementById('new_wh_binds').value = item.binds;
+            const bindArray = item.binds.split(',').map(s => s.trim());
+            Array.from(document.getElementById('new_wh_binds').options).forEach(opt => {
+                opt.selected = bindArray.includes('*') ? opt.value === '*' : bindArray.includes(opt.value);
+            });
             document.getElementById('new_wh_icon').value = item.icon || '';
             document.getElementById('new_wh_remark').value = item.remark || '';
             document.getElementById('add_webhook_form').style.display = 'block';
@@ -568,6 +577,16 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
                             </td>
                         </tr>
                     `;
+                });
+                // --- 动态渲染回调路由的多选下拉框 ---
+                const whSelect = document.getElementById('new_wh_binds');
+                whSelect.innerHTML = '<option value="*">[*] 接收所有地址回调</option>';
+                list.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.address;
+                    // 结合地址和网络，头尾截取展示防止太长
+                    option.textContent = `${item.name} (${item.address.substring(0,8)}...${item.address.substring(item.address.length-4)})`;
+                    whSelect.appendChild(option);
                 });
             } catch (e) { console.error("加载地址失败", e); }
         }
