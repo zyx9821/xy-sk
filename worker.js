@@ -76,6 +76,11 @@ export default {
                 await env.db.prepare("DELETE FROM addresses WHERE id = ?").bind(id).run();
                 return new Response(JSON.stringify({ success: true }));
             }
+            if (request.method === "PUT") {
+                const data = await request.json();
+                await env.db.prepare("UPDATE addresses SET name=?, address=?, icon=?, remark=? WHERE id=?").bind(data.name, data.address, data.icon, data.remark, data.id).run();
+                return new Response(JSON.stringify({ success: true }));
+            }
         }
 
         if (url.pathname === "/api/settings") {
@@ -110,8 +115,13 @@ export default {
             if (request.method === "PUT") {
                 const urlObj = new URL(request.url);
                 const id = urlObj.searchParams.get("id");
-                const status = urlObj.searchParams.get("status") === "1" ? 1 : 0;
-                await env.db.prepare("UPDATE webhooks SET enabled = ? WHERE id = ?").bind(status, id).run();
+                const status = urlObj.searchParams.get("status");
+                if (status !== null) {
+                    await env.db.prepare("UPDATE webhooks SET enabled = ? WHERE id = ?").bind(status === "1" ? 1 : 0, id).run();
+                } else {
+                    const data = await request.json();
+                    await env.db.prepare("UPDATE webhooks SET name=?, url=?, secret=?, binds=?, icon=?, remark=? WHERE id=?").bind(data.name, data.url, data.secret, data.binds, data.icon, data.remark, data.id).run();
+                }
                 return new Response(JSON.stringify({ success: true }));
             }
         }
