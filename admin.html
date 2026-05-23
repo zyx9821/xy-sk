@@ -141,11 +141,17 @@
                 <div class="card">
                     <div class="card-header">
                         <h3>全链入账记录 (USDT)</h3>
-                        <button class="btn" onclick="syncChain()">⚡ 手动唤醒全网扫描</button>
+                        <div>
+                            <button class="btn btn-danger" onclick="batchDeleteOrders()" style="margin-right: 8px; background: #ef4444;">🗑️ 批量删除选定流水</button>
+                            <button class="btn" onclick="syncChain()">⚡ 手动唤醒全网扫描</button>
+                        </div>
                     </div>
                     <div class="table-container">
                         <table id="txTable">
-                            <tr><th>处理网络</th><th>交易哈希</th><th>付款方 (From)</th><th>收款方 (To)</th><th>金额 (USDT)</th><th>系统时间</th><th>状态 (Status)</th></tr>
+                            <tr>
+                                <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAllTx" onchange="toggleSelectAllTx(this.checked)"></th>
+                                <th>处理网络</th><th>交易哈希</th><th>付款方 (From)</th><th>收款方 (To)</th><th>金额 (USDT)</th><th>系统时间</th><th>状态 (Status)</th><th>操作</th>
+                            </tr>
                         </table>
                     </div>
                 </div>
@@ -384,6 +390,7 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
                 let currentStatus = statusMap[statusStr] || { text: row.status.toUpperCase(), class: 'status-success' };
 
                 tr.innerHTML = `
+                    <td style="text-align: center;"><input type="checkbox" class="tx-checkbox" data-hash="${row.tx_hash}" data-network="${netName}"></td>
                     <td>${netBadge}</td>
                     <td><a href="${explorerUrl}" target="_blank" class="hash-tag" title="${row.tx_hash}">${row.tx_hash}</a></td>
                     <td>${fromAddr}</td>
@@ -391,6 +398,7 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
                     <td><strong style="color:#10b981; font-size:1.15em; font-family: monospace;">+ ${row.amount}</strong></td>
                     <td><span style="color:var(--text-muted); font-size:0.85em;">${new Date(row.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}</span></td>
                     <td><span class="status-badge ${currentStatus.class}">${currentStatus.text}</span></td>
+                    <td><button class="btn btn-danger" style="padding:4px 8px; font-size:0.8rem; background: #ef4444;" onclick="deleteSingleOrder('${row.tx_hash}', '${netName}')">删除</button></td>
                 `;
             });
 
@@ -569,6 +577,45 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             alert('📡 指令已下发！系统正在并发抓取多链数据。稍后请刷新页面。');
             await fetch('/api/sync', {method: 'POST'});
             location.reload();
+        }
+
+        // --- 新增：流水复选框全选/反选逻辑 ---
+        function toggleSelectAllTx(checked) {
+            document.querySelectorAll('.tx-checkbox').forEach(cb => cb.checked = checked);
+        }
+
+        // --- 新增：删除单条流水数据 ---
+        async function deleteSingleOrder(txHash, network) {
+            if (!confirm('确定要删除这笔交易流水记录吗？')) return;
+            try {
+                const res = await fetch(`/api/orders?tx_hash=${encodeURIComponent(txHash)}&network=${encodeURIComponent(network)}`, {
+                    method: 'DELETE'
+                });
+                const result = await res.json();
+                if (result.success) { location.reload(); } else { alert('删除失败'); }
+            } catch (e) { console.error(e); alert('网络异常'); }
+        }
+
+        // --- 新增：批量删除选中的流水数据 ---
+        async function batchDeleteOrders() {
+            const checkedBoxes = document.querySelectorAll('.tx-checkbox:checked');
+            if (checkedBoxes.length === 0) return alert('请先勾选需要删除的交易流水！');
+            if (!confirm(`确定要批量删除这 ${checkedBoxes.length} 条流水记录吗？`)) return;
+
+            const itemsToDelete = Array.from(checkedBoxes).map(cb => ({
+                tx_hash: cb.getAttribute('data-hash'),
+                network: cb.getAttribute('data-network')
+            }));
+
+            try {
+                const res = await fetch('/api/orders', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: itemsToDelete })
+                });
+                const result = await res.json();
+                if (result.success) { location.reload(); } else { alert('批量删除失败'); }
+            } catch (e) { console.error(e); alert('批量处理异常'); }
         }
 
         initData();
