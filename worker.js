@@ -6,7 +6,20 @@ const NETWORKS = {
     TRON: { type: 'tron', usdt: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', decimals: 6 },
     ETH:  { type: 'evm', rpc: 'https://cloudflare-eth.com', usdt: '0xdac17f958d2ee523a2206206994597c13d831ec7', decimals: 6 },
     BSC:  { type: 'evm', rpc: 'https://bsc-dataseed.binance.org', usdt: '0x55d398326f99059ff775485246999027b3197955', decimals: 18 },
-    AVAX: { type: 'evm', rpc: 'https://api.avax.network/ext/bc/C/rpc', usdt: '0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7', decimals: 6 }
+    AVAX: { type: 'evm', rpc: 'https://api.avax.network/ext/bc/C/rpc', usdt: '0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7', decimals: 6 },
+    ARBITRUM: { type: 'evm', rpc: 'https://arb1.arbitrum.io/rpc', usdt: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9', decimals: 6 },
+    OPTIMISM: { type: 'evm', rpc: 'https://mainnet.optimism.io', usdt: '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58', decimals: 6 },
+    POLYGON:  { type: 'evm', rpc: 'https://polygon-rpc.com', usdt: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f', decimals: 6 },
+    XLAYER:   { type: 'evm', rpc: 'https://rpc.xlayer.tech', usdt: '0x1e4a5963abfd975d8c9021ce480b42188849d41d', decimals: 6 },
+    OKT:      { type: 'evm', rpc: 'https://exchainrpc.okex.org', usdt: '0x382bb369d343125bfb2117af9c149795c6c65c50', decimals: 18 },
+    BERACHAIN:{ type: 'evm', rpc: 'https://rpc.berachain.com', usdt: '0x0000000000000000000000000000000000000000', decimals: 18 },
+    MONAD:    { type: 'evm', rpc: 'https://rpc.monad.xyz', usdt: '0x0000000000000000000000000000000000000000', decimals: 6 },
+    PLASMA:   { type: 'evm', rpc: 'https://rpc.plasmachain.com', usdt: '0x0000000000000000000000000000000000000000', decimals: 6 },
+    TEMPO:    { type: 'evm', rpc: 'https://rpc.tempo.network', usdt: '0x0000000000000000000000000000000000000000', decimals: 6 },
+    UNICHAIN: { type: 'evm', rpc: 'https://mainnet.unichain.org', usdt: '0x0000000000000000000000000000000000000000', decimals: 6 },
+    APTOS:    { type: 'aptos', rpc: 'https://fullnode.mainnet.aptoslabs.com/v1' },
+    SOLANA:   { type: 'solana', rpc: 'https://api.mainnet-beta.solana.com' },
+    TON:      { type: 'ton', rpc: 'https://toncenter.com/api/v2/jsonRPC' }
 };
 // EVM ERC20 Transfer 事件的 Keccak-256 签名
 const EVM_TRANSFER_SIG = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
@@ -180,7 +193,10 @@ export default {
 
             // 地址分类路由
             const tronAddrs = addresses.filter(a => a.startsWith("T"));
-            const evmAddrs = addresses.filter(a => a.startsWith("0x"));
+            const evmAddrs = addresses.filter(a => a.startsWith("0x") && a.length === 42);
+            const aptosAddrs = addresses.filter(a => a.startsWith("0x") && a.length === 66);
+            const tonAddrs = addresses.filter(a => a.startsWith("UQ") || a.startsWith("EQ"));
+            const solAddrs = addresses.filter(a => !a.startsWith("0x") && !a.startsWith("T") && !a.startsWith("UQ") && !a.startsWith("EQ") && a.length >= 32);
 
             // 构造异步任务数组，让所有链并发执行
             const syncTasks = [];
@@ -194,8 +210,23 @@ export default {
                 syncTasks.push(this.syncEVMNetwork(env, 'ETH', NETWORKS.ETH, evmAddrs, webhooks));
                 syncTasks.push(this.syncEVMNetwork(env, 'BSC', NETWORKS.BSC, evmAddrs, webhooks));
                 syncTasks.push(this.syncEVMNetwork(env, 'AVAX', NETWORKS.AVAX, evmAddrs, webhooks));
+                
+            syncTasks.push(this.syncEVMNetwork(env, 'ARBITRUM', NETWORKS.ARBITRUM, evmAddrs, webhooks));
+                syncTasks.push(this.syncEVMNetwork(env, 'OPTIMISM', NETWORKS.OPTIMISM, evmAddrs, webhooks));
+                syncTasks.push(this.syncEVMNetwork(env, 'POLYGON', NETWORKS.POLYGON, evmAddrs, webhooks));
+                syncTasks.push(this.syncEVMNetwork(env, 'XLAYER', NETWORKS.XLAYER, evmAddrs, webhooks));
+                syncTasks.push(this.syncEVMNetwork(env, 'OKT', NETWORKS.OKT, evmAddrs, webhooks));
+                syncTasks.push(this.syncEVMNetwork(env, 'BERACHAIN', NETWORKS.BERACHAIN, evmAddrs, webhooks));
+                syncTasks.push(this.syncEVMNetwork(env, 'MONAD', NETWORKS.MONAD, evmAddrs, webhooks));
+                syncTasks.push(this.syncEVMNetwork(env, 'PLASMA', NETWORKS.PLASMA, evmAddrs, webhooks));
+                syncTasks.push(this.syncEVMNetwork(env, 'TEMPO', NETWORKS.TEMPO, evmAddrs, webhooks));
+                syncTasks.push(this.syncEVMNetwork(env, 'UNICHAIN', NETWORKS.UNICHAIN, evmAddrs, webhooks));
             }
-
+            
+            // 3. 装载异构链任务 (Aptos, Solana, TON)
+            if (aptosAddrs.length > 0) syncTasks.push(this.syncAptosNetwork(env, aptosAddrs, webhooks));
+            if (solAddrs.length > 0) syncTasks.push(this.syncSolanaNetwork(env, solAddrs, webhooks));
+            if (tonAddrs.length > 0) syncTasks.push(this.syncTonNetwork(env, tonAddrs, webhooks));
             // 并发执行所有链的扫块
             await Promise.allSettled(syncTasks);
 
@@ -280,6 +311,19 @@ export default {
             } catch (e) { console.error(`TRON 同步异常:`, e); }
         }
         if (globalNewestTime > minTimestamp) await env.kv.put("last_check_tron", globalNewestTime.toString());
+    },
+    // --- 异构公链独立扫块引擎框架 (Aptos, Solana, TON) ---
+    async syncAptosNetwork(env, addresses, webhooks) {
+        // TODO: 通过 Aptos REST API 拉取对应地址的 0x1::coin::CoinStore<0x...USDT> 的 DepositEvent
+        // 扫到之后调用公用方法：await this.saveAndNotify(env, { network: 'APTOS', txHash: ..., amount: ..., fromAddr: ..., toAddr: ..., timestamp: ... }, webhooks);
+    },
+    async syncSolanaNetwork(env, addresses, webhooks) {
+        // TODO: 通过 Solana 的 getSignaturesForAddress 轮询 SPL-Token 转移情况
+        // 扫到之后调用公用方法：await this.saveAndNotify(env, txData, webhooks);
+    },
+    async syncTonNetwork(env, addresses, webhooks) {
+        // TODO: 通过 TonCenter API 查询 Jetton (USDT) 的交易历史
+        // 扫到之后调用公用方法：await this.saveAndNotify(env, txData, webhooks);
     },
 
     // --- 数据入库与 Webhook 分发 ---
