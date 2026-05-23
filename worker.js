@@ -170,6 +170,22 @@ export default {
             return new Response(JSON.stringify({ success: true }));
         }
 
+        // ==========================================
+        // 【新增】静态文件路由：拦截 /files/ 目录并返回图片
+        // ==========================================
+        if (url.pathname.startsWith("/files/")) {
+            // 利用 GitHub Raw 代理读取代码仓库中的 WebP 图片
+            // 确保仓库名 zyx9821/xy-sk 和分支 main 与你实际环境一致
+            const imgRes = await fetch(imgUrl);
+            return new Response(imgRes.body, {
+                status: imgRes.status,
+                headers: { 
+                    "Content-Type": "image/webp",
+                    "Cache-Control": "public, max-age=86400" 
+                }
+            });
+        }
+
         return new Response("404 Not Found", { status: 404 });
     },
 
