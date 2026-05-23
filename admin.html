@@ -565,7 +565,7 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
                     <td><a href="${explorerUrl}" target="_blank" class="hash-tag" title="${row.tx_hash}">${row.tx_hash}</a></td>
                     <td>${fromAddr}</td>
                     <td>${toAddr}</td>
-                    <td><strong style="color:#10b981; font-size:1.15em; font-family: monospace;">+ ${row.amount}</strong></td>
+                    <td><strong style="color:#ff0000; font-size:1.15em;">+ ${row.amount}</strong></td>
                     <td><span style="color:var(--text-muted); font-size:0.85em;">${new Date(row.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}</span></td>
                     <td><span class="status-badge ${currentStatus.class}">${currentStatus.text}</span></td>
                     <td><button class="btn btn-danger" style="padding:4px 8px; font-size:0.8rem; background: #ef4444;" onclick="deleteSingleOrder('${row.tx_hash}', '${netName}')">删除</button></td>
