@@ -64,6 +64,19 @@
         .net-BSC { background: linear-gradient(135deg, #f59e0b, #d97706); }
         .net-ETH { background: linear-gradient(135deg, #6366f1, #4f46e5); }
         .net-AVAX { background: linear-gradient(135deg, #e11d48, #be123c); }
+        .net-ARBITRUM { background: linear-gradient(135deg, #28a0f0, #1272c2); }
+        .net-OPTIMISM { background: linear-gradient(135deg, #ff0420, #cb0016); }
+        .net-POLYGON { background: linear-gradient(135deg, #8247e5, #5f2aab); }
+        .net-XLAYER { background: linear-gradient(135deg, #f1a830, #c88117); }
+        .net-OKT { background: linear-gradient(135deg, #1b65e2, #1048a6); }
+        .net-APTOS { background: linear-gradient(135deg, #25e7b2, #1bb58b); }
+        .net-SOLANA { background: linear-gradient(135deg, #14f195, #9945ff); }
+        .net-TON { background: linear-gradient(135deg, #0098ea, #0076b6); }
+        .net-BERACHAIN { background: linear-gradient(135deg, #ff8400, #b35c00); }
+        .net-MONAD { background: linear-gradient(135deg, #836ef9, #5e4bd6); }
+        .net-PLASMA { background: linear-gradient(135deg, #512da8, #311b92); }
+        .net-TEMPO { background: linear-gradient(135deg, #0f172a, #000000); }
+        .net-UNICHAIN { background: linear-gradient(135deg, #ff1493, #c71585); }
 
         /* ================= 动态地址解析器样式 ================= */
         .preview-container { margin-top: 15px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; display: flex; flex-direction: column; }
@@ -279,7 +292,10 @@
                         <p style="color: #4b5563; font-size: 0.95rem; line-height: 1.6;">
                             在【基础配置】的地址池中：<br>
                             - 只要你输入以 <code>T</code> 开头的地址，系统将自动调用 <strong>TRON (波场)</strong> 引擎进行扫描。<br>
-                            - 只要你输入以 <code>0x</code> 开头的地址，系统将自动判定为 EVM 兼容链，并<strong>同时调用 ETH、BSC、AVAX</strong> 三个引擎对该地址进行并发扫描。无需手动指定网络！
+                            - 只要你输入以 <code>0x</code> 开头且长度为42的地址，系统自动调用 <strong>EVM引擎</strong> 并发扫描 ETH, BSC, AVAX, Arbitrum, Optimism, Polygon, X Layer, OKT 等所有EVM链。<br>
+                            - 只要你输入以 <code>0x</code> 开头且长度为66的地址，系统自动调用 <strong>Aptos</strong> 引擎扫描。<br>
+                            - 只要你输入以 <code>UQ</code> 或 <code>EQ</code> 开头的地址，系统自动调用 <strong>TON</strong> 引擎扫描。<br>
+                            - 只要你输入 Base58 格式（非 T 且非 0x 开头），系统自动调用 <strong>Solana</strong> 引擎扫描。
                         </p>
                     </div>
 
@@ -380,6 +396,15 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
                 if(netName === 'BSC') explorerUrl = `https://bscscan.com/tx/${row.tx_hash}`;
                 if(netName === 'ETH') explorerUrl = `https://etherscan.io/tx/${row.tx_hash}`;
                 if(netName === 'AVAX') explorerUrl = `https://snowtrace.io/tx/${row.tx_hash}`;
+                if(netName === 'ARBITRUM') explorerUrl = `https://arbiscan.io/tx/${row.tx_hash}`;
+                if(netName === 'OPTIMISM') explorerUrl = `https://optimistic.etherscan.io/tx/${row.tx_hash}`;
+                if(netName === 'POLYGON') explorerUrl = `https://polygonscan.com/tx/${row.tx_hash}`;
+                if(netName === 'XLAYER') explorerUrl = `https://www.okx.com/web3/explorer/xlayer/tx/${row.tx_hash}`;
+                if(netName === 'OKT') explorerUrl = `https://www.oklink.com/oktc/tx/${row.tx_hash}`;
+                if(netName === 'APTOS') explorerUrl = `https://explorer.aptoslabs.com/txn/${row.tx_hash}?network=mainnet`;
+                if(netName === 'SOLANA') explorerUrl = `https://solscan.io/tx/${row.tx_hash}`;
+                if(netName === 'TON') explorerUrl = `https://tonviewer.com/transaction/${row.tx_hash}`;
+                if(['BERACHAIN', 'MONAD', 'PLASMA', 'TEMPO', 'UNICHAIN'].includes(netName)) explorerUrl = `https://explorer.${netName.toLowerCase()}.org/tx/${row.tx_hash}`;
 
                 // 状态中英文映射器
                 let statusStr = (row.status || 'pending').toLowerCase();
