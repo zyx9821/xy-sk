@@ -135,18 +135,14 @@
                     
                     <div id="add_webhook_form" style="display:none; background:#f8fafc; padding:20px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:20px;">
                         <div style="display:flex; gap:15px; margin-bottom:15px;">
+                            <div style="flex:1;"><label style="font-size:0.9rem;">图标链接 (选填)</label><input type="text" id="new_wh_icon" placeholder="https://..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                             <div style="flex:1;"><label style="font-size:0.9rem;">节点名称</label><input type="text" id="new_wh_name" placeholder="如: 官方发卡网" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                             <div style="flex:2;"><label style="font-size:0.9rem;">CALLBACK_URL</label><input type="text" id="new_wh_url" placeholder="https://yourdomain.com/callback.php" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                            <div style="flex:2;"><label style="font-size:0.9rem;">APP_SECRET</label><input type="text" id="new_wh_secret" placeholder="通讯密钥密文" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                            <div style="flex:2;"><label style="font-size:0.9rem;">绑定靓号池 (*代表全部)</label><input type="text" id="new_wh_binds" value="*" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                            <div style="flex:1;"><label style="font-size:0.9rem;">备注 (选填)</label><input type="text" id="new_wh_remark" placeholder="节点业务内部备注信息" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                         </div>
-                        <div style="display:flex; gap:15px; margin-bottom:15px;">
-                            <div style="flex:1;"><label style="font-size:0.9rem;">APP_SECRET</label><input type="text" id="new_wh_secret" placeholder="通讯密钥密文" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
-                            <div style="flex:1;"><label style="font-size:0.9rem;">绑定靓号池 (*代表全部)</label><input type="text" id="new_wh_binds" value="*" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
-                        </div>
-                        <div style="display:flex; gap:15px; margin-bottom:15px;">
-                            <div style="flex:1;"><label style="font-size:0.9rem;">图标链接 (选填)</label><input type="text" id="new_wh_icon" placeholder="https://..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
-                            <div style="flex:2;"><label style="font-size:0.9rem;">备注 (选填)</label><input type="text" id="new_wh_remark" placeholder="节点业务内部备注信息" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
-                        </div>
-                        <div style="text-align:right;">
+                        <div style="text-align:center;">
                             <button class="btn" style="background:#94a3b8; margin-right:10px;" onclick="resetFormState('webhook')">取消</button>
                             <button class="btn btn-success" onclick="submitNewWebhook()">确认保存</button>
                         </div>
@@ -178,7 +174,7 @@
                         <h4 style="margin-top:0; color:var(--text-main); font-size:1rem;">💡 回调路由参数说明：</h4>
                         <ul style="font-size: 0.85rem; color: #4b5563; line-height: 1.8; padding-left: 20px; margin-bottom:0;">
                             <li><strong>节点序数ID：</strong>系统 D1 数据库主键自动递增生成的唯一节点序列号，无法篡改。</li>
-                            <li><strong>图标/图片：</strong>节点的视觉徽标链接（例如各发卡站的小图标），直观区分不同的分发终端。</li>
+                            <li><strong>图标：</strong>节点的视觉徽标链接（例如各发卡站的小图标），直观区分不同的分发终端。</li>
                             <li><strong>名称：</strong>自定义的业务系统代号。如“发卡A站”、“测试分流端”，方便多商户环境下的分类辨识。</li>
                             <li><strong>CALLBACK_URL：</strong>外部接收充值入账通知的网关 API 接口<code>https://yourdomain.com/callback.php</code>。当链上扫出新订单时，系统会向此地址发送异步 <code>POST</code> 核心请求。</li>
                             <li><strong>APP_SECRET：</strong>通讯层加密签名密钥。系统通过哈希算法将订单要素与该密钥拼接。外部接收端必须持有相同密钥进行哈希对比验签，防止非法伪造回调。</li>
@@ -199,14 +195,12 @@
                 
                 <div id="add_address_form" style="display:none; background:#f8fafc; padding:20px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:20px;">
                     <div style="display:flex; gap:15px; margin-bottom:15px;">
+                        <div style="flex:2;"><label style="font-size:0.9rem;">图标链接 (选填)</label><input type="text" id="new_addr_icon" placeholder="https://..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                         <div style="flex:1;"><label style="font-size:0.9rem;">网络/名称</label><input type="text" id="new_addr_name" placeholder="如: 波场主钱包" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                         <div style="flex:2;"><label style="font-size:0.9rem;">钱包地址</label><input type="text" id="new_addr_val" placeholder="输入 T 或 0x 开头的地址" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                        <div style="flex:1;"><label style="font-size:0.9rem;">备注 (选填)</label><input type="text" id="new_addr_remark" placeholder="内部备注信息" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                     </div>
-                    <div style="display:flex; gap:15px; margin-bottom:15px;">
-                        <div style="flex:1;"><label style="font-size:0.9rem;">图标链接 (选填)</label><input type="text" id="new_addr_icon" placeholder="https://..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
-                        <div style="flex:2;"><label style="font-size:0.9rem;">备注 (选填)</label><input type="text" id="new_addr_remark" placeholder="内部备注信息" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
-                    </div>
-                    <div style="text-align:right;">
+                    <div style="text-align:center;">
                         <button class="btn" style="background:#94a3b8; margin-right:10px;" onclick="resetFormState('address')">取消</button>
                         <button class="btn btn-success" onclick="submitNewAddress()">确认保存</button>
                     </div>
