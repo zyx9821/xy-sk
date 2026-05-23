@@ -93,7 +93,7 @@
         .form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.95rem;}
         .form-group textarea, .form-group input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: monospace; box-sizing: border-box; background: #f8fafc; outline: none; transition: 0.2s; }
         #add_webhook_form input, #add_address_form input { box-sizing: border-box; }
-        #add_webhook_form select { width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 8px; font-family: monospace; box-sizing: border-box; background: white; outline: none; height: 100px; overflow-y: auto; }
+        #add_webhook_form select { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: monospace; box-sizing: border-box; background: #f8fafc; outline: none; cursor: pointer; transition: 0.2s; appearance: auto; }
         #add_webhook_form > div:first-child, #add_address_form > div:first-child { flex-wrap: wrap; }
         .form-group textarea:focus, .form-group input:focus, #add_webhook_form select:focus { 
             border-color: var(--primary); 
@@ -188,7 +188,7 @@
                             <div style="flex:1;"><label style="font-size:0.9rem;">节点名称</label><input type="text" id="new_wh_name" placeholder="如: 官方发卡网" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                             <div style="flex:2;"><label style="font-size:0.9rem;">CALLBACK_URL</label><input type="text" id="new_wh_url" placeholder="https://yourdomain.com/callback.php" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                             <div style="flex:2;"><label style="font-size:0.9rem;">APP_SECRET</label><input type="text" id="new_wh_secret" placeholder="通讯密钥密文" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
-                            <div style="flex:2;"><label style="font-size:0.9rem;">绑定地址 (按住 Ctrl/Cmd 多选)</label><select id="new_wh_binds" multiple><option value="*">[*] 接收所有地址回调</option></select></div>
+                            <div style="flex:2;"><label style="font-size:0.9rem;">绑定精准单地址 (默认全网)</label><select id="new_wh_binds" style="margin-top:5px;"><option value="*">[*] 接收所有地址回调</option></select></div>
                             <div style="flex:1;"><label style="font-size:0.9rem;">备注 (选填)</label><input type="text" id="new_wh_remark" placeholder="节点业务内部备注信息" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                         </div>
                         <div style="text-align:center;">
@@ -510,7 +510,7 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
                 name: document.getElementById('new_wh_name').value.trim(),
                 url: document.getElementById('new_wh_url').value.trim(),
                 secret: document.getElementById('new_wh_secret').value.trim(),
-                binds: Array.from(document.getElementById('new_wh_binds').selectedOptions).map(opt => opt.value).join(',') || '*',
+                binds: document.getElementById('new_wh_binds').value || '*',
                 icon: document.getElementById('new_wh_icon').value.trim(),
                 remark: document.getElementById('new_wh_remark').value.trim()
             };
@@ -532,10 +532,7 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             document.getElementById('new_wh_name').value = item.name;
             document.getElementById('new_wh_url').value = item.url;
             document.getElementById('new_wh_secret').value = item.secret;
-            const bindArray = item.binds.split(',').map(s => s.trim());
-            Array.from(document.getElementById('new_wh_binds').options).forEach(opt => {
-                opt.selected = bindArray.includes('*') ? opt.value === '*' : bindArray.includes(opt.value);
-            });
+            document.getElementById('new_wh_binds').value = item.binds.includes(',') ? '*' : item.binds;
             document.getElementById('new_wh_icon').value = item.icon || '';
             document.getElementById('new_wh_remark').value = item.remark || '';
             document.getElementById('add_webhook_form').style.display = 'block';
