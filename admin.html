@@ -53,7 +53,7 @@
         
         /* 徽章与标签 */
         .address-tag { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 6px; font-family: monospace; }
-        .net-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.85em; font-weight: bold; color: white; display: inline-block; text-align: center; min-width: 45px;}
+        .net-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.85em; font-weight: bold; color: white; display: inline-block; text-align: center; min-width: 45px; background: #94a3b8; }
         .net-TRON { background: linear-gradient(135deg, #ef4444, #dc2626); }
         .net-BSC { background: linear-gradient(135deg, #f59e0b, #d97706); }
         .net-ETH { background: linear-gradient(135deg, #6366f1, #4f46e5); }
@@ -355,16 +355,19 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             const table = document.getElementById('txTable');
             data.forEach(row => {
                 const tr = table.insertRow();
-                const netBadge = `<span class="net-badge net-${row.network}">${row.network}</span>`;
+                // 强制将网络名称转为大写，防止因旧数据为小写(如 tron)导致 CSS 和链接匹配失败
+                const netName = (row.network || 'UNKNOWN').toUpperCase();
+                const netBadge = `<span class="net-badge net-${netName}">${netName}</span>`;
+                
                 // 分离付款方与收款方 UI（使用不同底色做区分）
                 const fromAddr = row.from_address ? `<span class="address-tag" style="background:#f1f5f9; color:#64748b; border: 1px solid #e2e8f0;">${row.from_address.substring(0,8)}...</span>` : '-';
                 const toAddr = row.to_address ? `<span class="address-tag" style="border: 1px solid #bae6fd;">${row.to_address.substring(0,8)}...</span>` : '-';
                 
                 let explorerUrl = "#";
-                if(row.network === 'TRON') explorerUrl = `https://tronscan.org/#/transaction/${row.tx_hash}`;
-                if(row.network === 'BSC') explorerUrl = `https://bscscan.com/tx/${row.tx_hash}`;
-                if(row.network === 'ETH') explorerUrl = `https://etherscan.io/tx/${row.tx_hash}`;
-                if(row.network === 'AVAX') explorerUrl = `https://snowtrace.io/tx/${row.tx_hash}`;
+                if(netName === 'TRON') explorerUrl = `https://tronscan.org/#/transaction/${row.tx_hash}`;
+                if(netName === 'BSC') explorerUrl = `https://bscscan.com/tx/${row.tx_hash}`;
+                if(netName === 'ETH') explorerUrl = `https://etherscan.io/tx/${row.tx_hash}`;
+                if(netName === 'AVAX') explorerUrl = `https://snowtrace.io/tx/${row.tx_hash}`;
 
                 // 状态中英文映射器
                 let statusStr = (row.status || 'pending').toLowerCase();
