@@ -130,7 +130,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h3>发卡网异步回调路由列表</h3>
-                        <button class="btn btn-success" onclick="document.getElementById('add_webhook_form').style.display='block'">+ 增加回调节点</button>
+                        <button class="btn btn-success" onclick="resetFormState('webhook'); document.getElementById('add_webhook_form').style.display='block'">+ 增加回调节点</button>
                     </div>
                     
                     <div id="add_webhook_form" style="display:none; background:#f8fafc; padding:20px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:20px;">
@@ -147,7 +147,7 @@
                             <div style="flex:2;"><label style="font-size:0.9rem;">备注 (选填)</label><input type="text" id="new_wh_remark" placeholder="节点业务内部备注信息" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                         </div>
                         <div style="text-align:right;">
-                            <button class="btn" style="background:#94a3b8; margin-right:10px;" onclick="document.getElementById('add_webhook_form').style.display='none'">取消</button>
+                            <button class="btn" style="background:#94a3b8; margin-right:10px;" onclick="resetFormState('webhook')">取消</button>
                             <button class="btn btn-success" onclick="submitNewWebhook()">确认保存</button>
                         </div>
                     </div>
@@ -194,7 +194,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3>全网收款地址列表</h3>
-                    <button class="btn btn-success" onclick="document.getElementById('add_address_form').style.display='block'">+ 增加地址</button>
+                    <button class="btn btn-success" onclick="resetFormState('address'); document.getElementById('add_address_form').style.display='block'">+ 增加地址</button>
                 </div>
                 
                 <div id="add_address_form" style="display:none; background:#f8fafc; padding:20px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:20px;">
@@ -207,7 +207,7 @@
                         <div style="flex:2;"><label style="font-size:0.9rem;">备注 (选填)</label><input type="text" id="new_addr_remark" placeholder="内部备注信息" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                     </div>
                     <div style="text-align:right;">
-                        <button class="btn" style="background:#94a3b8; margin-right:10px;" onclick="document.getElementById('add_address_form').style.display='none'">取消</button>
+                        <button class="btn" style="background:#94a3b8; margin-right:10px;" onclick="resetFormState('address')">取消</button>
                         <button class="btn btn-success" onclick="submitNewAddress()">确认保存</button>
                     </div>
                 </div>
@@ -307,6 +307,20 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
 
     <script>
 
+        let editWebhookId = null;
+        let editAddressId = null;
+        let globalWebhooks = [];
+        let globalAddresses = [];
+
+        function resetFormState(type) {
+            if(type === 'webhook') { editWebhookId = null; document.getElementById('add_webhook_form').style.display='none'; }
+            if(type === 'address') { editAddressId = null; document.getElementById('add_address_form').style.display='none'; }
+            ['new_wh_name', 'new_wh_url', 'new_wh_secret', 'new_wh_binds', 'new_wh_icon', 'new_wh_remark', 'new_addr_name', 'new_addr_val', 'new_addr_icon', 'new_addr_remark'].forEach(id => {
+                let el = document.getElementById(id);
+                if(el) el.value = (id === 'new_wh_binds' ? '*' : '');
+            });
+        }
+        
         function switchTab(tabId, title) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
@@ -356,6 +370,7 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             try {
                 const res = await fetch('/api/webhooks');
                 const list = await res.json();
+                globalWebhooks = list;
                 const tbody = document.getElementById('webhook_list_body');
                 tbody.innerHTML = '';
                 
@@ -384,7 +399,10 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
                                     <span class="slider"></span>
                                 </label>
                             </td>
-                            <td><button class="btn btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteWebhook(${item.id})">删除</button></td>
+                            <td>
+                                <button class="btn" style="background:#f59e0b; padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="editWebhookData(${item.id})">编辑</button>
+                                <button class="btn btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteWebhook(${item.id})">删除</button>
+                            </td>
                         </tr>
                     `;
                 });
@@ -402,13 +420,27 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             };
             if (!data.name || !data.url || !data.secret) return alert("名称、URL 和密钥为必填项！");
             
-            await fetch('/api/webhooks', { method: 'POST', body: JSON.stringify(data) });
-            document.getElementById('add_webhook_form').style.display = 'none';
-            // 归位表单项
-            ['new_wh_name', 'new_wh_url', 'new_wh_secret', 'new_wh_binds', 'new_wh_icon', 'new_wh_remark'].forEach(id => {
-                document.getElementById(id).value = (id === 'new_wh_binds' ? '*' : '');
-            });
+            if (editWebhookId) {
+                data.id = editWebhookId;
+                await fetch('/api/webhooks', { method: 'PUT', body: JSON.stringify(data) });
+            } else {
+                await fetch('/api/webhooks', { method: 'POST', body: JSON.stringify(data) });
+            }
+            resetFormState('webhook');
             loadWebhooks();
+        }
+        function editWebhookData(id) {
+            const item = globalWebhooks.find(x => x.id === id);
+            if (!item) return;
+            editWebhookId = id;
+            document.getElementById('new_wh_name').value = item.name;
+            document.getElementById('new_wh_url').value = item.url;
+            document.getElementById('new_wh_secret').value = item.secret;
+            document.getElementById('new_wh_binds').value = item.binds;
+            document.getElementById('new_wh_icon').value = item.icon || '';
+            document.getElementById('new_wh_remark').value = item.remark || '';
+            document.getElementById('add_webhook_form').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         async function deleteWebhook(id) {
@@ -425,6 +457,7 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             try {
                 const res = await fetch('/api/addresses');
                 const list = await res.json();
+                globalAddresses = list;
                 const tbody = document.getElementById('address_list_body');
                 tbody.innerHTML = '';
                 
@@ -444,7 +477,10 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
                             <td style="font-family:monospace; color:#0284c7;">${item.address}</td>
                             <td style="font-size:0.85em; color:var(--text-muted);">${timeStr}</td>
                             <td>${item.remark || '-'}</td>
-                            <td><button class="btn btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteAddress(${item.id})">删除</button></td>
+                            <td>
+                                <button class="btn" style="background:#f59e0b; padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="editAddressData(${item.id})">编辑</button>
+                                <button class="btn btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteAddress(${item.id})">删除</button>
+                            </td>
                         </tr>
                     `;
                 });
@@ -460,11 +496,26 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             };
             if (!data.name || !data.address) return alert("名称和地址为必填项！");
             
-            await fetch('/api/addresses', { method: 'POST', body: JSON.stringify(data) });
-            document.getElementById('add_address_form').style.display = 'none';
-            // 清空表单
-            ['new_addr_name', 'new_addr_val', 'new_addr_icon', 'new_addr_remark'].forEach(id => document.getElementById(id).value = '');
+            if (editAddressId) {
+                data.id = editAddressId;
+                await fetch('/api/addresses', { method: 'PUT', body: JSON.stringify(data) });
+            } else {
+                await fetch('/api/addresses', { method: 'POST', body: JSON.stringify(data) });
+            }
+            resetFormState('address');
             loadAddresses(); // 重新渲染表格
+        }
+
+        function editAddressData(id) {
+            const item = globalAddresses.find(x => x.id === id);
+            if (!item) return;
+            editAddressId = id;
+            document.getElementById('new_addr_name').value = item.name;
+            document.getElementById('new_addr_val').value = item.address;
+            document.getElementById('new_addr_icon').value = item.icon || '';
+            document.getElementById('new_addr_remark').value = item.remark || '';
+            document.getElementById('add_address_form').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         async function deleteAddress(id) {
