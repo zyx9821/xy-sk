@@ -19,8 +19,8 @@
         .sidebar { width: 260px; background: var(--bg-sidebar); display: flex; flex-direction: column; z-index: 10; box-shadow: 2px 0 8px rgba(0,0,0,0.1); }
         .sidebar-logo { height: 70px; display: flex; align-items: center; padding: 0 24px; color: white; font-size: 1.15rem; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .sidebar-logo span { color: var(--primary); margin-right: 8px; }
-        .nav-menu { padding: 20px 12px; display: flex; flex-direction: column; gap: 8px; }
-        .nav-item { padding: 14px 18px; color: #94a3b8; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 500; display: flex; align-items: center; gap: 10px; transition: 0.2s;}
+        .nav-menu { padding: 20px 12px; display: flex; flex-direction: column; }
+        .nav-item { padding: 14px 18px; color: #94a3b8; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 500; display: flex; align-items: center; transition: 0.2s;}
         .nav-item:hover { background: #1e293b; color: white; }
         .nav-item.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
 
@@ -51,11 +51,11 @@
         .net-AVAX { background: linear-gradient(135deg, #e11d48, #be123c); }
 
         /* ================= 动态地址解析器样式 ================= */
-        .preview-container { margin-top: 15px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; display: flex; flex-direction: column; gap: 10px; }
+        .preview-container { margin-top: 15px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; display: flex; flex-direction: column; }
         .addr-row { display: flex; align-items: center; background: white; padding: 10px 15px; border-radius: 8px; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
         .addr-string { font-family: monospace; font-size: 1rem; color: #374151; flex: 1; margin-left: 15px; }
-        .chain-icons { display: flex; gap: 8px; }
-        .chain-icon-badge { display: flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: white; }
+        .chain-icons { display: flex; }
+        .chain-icon-badge { display: flex; align-items: center; padding: 4px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: white; }
         
         .btn { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; transition: 0.2s; font-weight: 500; }
         .btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
@@ -78,9 +78,17 @@
 
         /* 文档说明页样式 */
         .doc-section { margin-bottom: 30px; }
-        .doc-section h4 { color: var(--primary); margin-bottom: 10px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+        .doc-section h4 { color: var(--primary); margin-bottom: 10px; font-size: 1.1rem; display: flex; align-items: center; }
         .doc-code { background: #1e293b; color: #a5b4fc; padding: 15px; border-radius: 8px; font-family: monospace; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
         .doc-alert { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; margin-bottom: 20px; border-radius: 0 8px 8px 0; color: #92400e; font-size: 0.9rem; }
+        #add_webhook_form > div:first-child > div, #add_address_form > div:first-child > div { padding-right: 15px; margin-bottom: 10px; box-sizing: border-box; }
+        #add_webhook_form > div:first-child > div:last-child, #add_address_form > div:first-child > div:last-child { padding-right: 0; }
+        .nav-menu > * + * { margin-top: 8px; }
+        .nav-item > * + * { margin-left: 10px; }
+        .preview-container > * + * { margin-top: 10px; }
+        .chain-icons > * + * { margin-left: 8px; }
+        .chain-icon-badge > * + * { margin-left: 5px; }
+        .doc-section h4 > * + * { margin-left: 8px; }
     </style>
 </head>
 <body>
@@ -136,7 +144,7 @@
                     </div>
                     
                     <div id="add_webhook_form" style="display:none; background:#f8fafc; padding:20px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:20px;">
-                        <div style="display:flex; gap:15px; margin-bottom:15px;">
+                        <div style="display:flex; margin-bottom:15px;">
                             <div style="flex:1;"><label style="font-size:0.9rem;">图标链接 (选填)</label><input type="text" id="new_wh_icon" placeholder="https://..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                             <div style="flex:1;"><label style="font-size:0.9rem;">节点名称</label><input type="text" id="new_wh_name" placeholder="如: 官方发卡网" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                             <div style="flex:2;"><label style="font-size:0.9rem;">CALLBACK_URL</label><input type="text" id="new_wh_url" placeholder="https://yourdomain.com/callback.php" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
@@ -196,7 +204,7 @@
                 </div>
                 
                 <div id="add_address_form" style="display:none; background:#f8fafc; padding:20px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:20px;">
-                    <div style="display:flex; gap:15px; margin-bottom:15px;">
+                    <div style="display:flex; margin-bottom:15px;">
                         <div style="flex:2;"><label style="font-size:0.9rem;">图标链接 (选填)</label><input type="text" id="new_addr_icon" placeholder="https://..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                         <div style="flex:1;"><label style="font-size:0.9rem;">网络/名称</label><input type="text" id="new_addr_name" placeholder="如: 波场主钱包" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                         <div style="flex:2;"><label style="font-size:0.9rem;">钱包地址</label><input type="text" id="new_addr_val" placeholder="输入 T 或 0x 开头的地址" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
