@@ -42,6 +42,15 @@
         th, td { padding: 14px 16px; border-bottom: 1px solid var(--border); }
         th { background: #f8fafc; color: var(--text-muted); font-weight: 600; }
         
+        /* 表格交互与流水 UI 专属样式 */
+        #txTable tr { transition: background-color 0.2s ease; }
+        #txTable tr:hover { background-color: #f8fafc; }
+        .hash-tag { color: var(--primary); text-decoration: none; font-family: monospace; font-weight: 500; }
+        .hash-tag:hover { text-decoration: underline; color: var(--primary-hover); }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-block; border: 1px solid transparent; }
+        .status-success { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+        .status-pending { background: #fef08a; color: #854d0e; border-color: #fde047; }
+        
         /* 徽章与标签 */
         .address-tag { background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 6px; font-family: monospace; }
         .net-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.85em; font-weight: bold; color: white; display: inline-block; text-align: center; min-width: 45px;}
@@ -130,7 +139,7 @@
                     </div>
                     <div class="table-container">
                         <table id="txTable">
-                            <tr><th>处理网络</th><th>交易哈希</th><th>收款靓号</th><th>金额 (USDT)</th><th>系统时间</th><th>状态</th></tr>
+                            <tr><th>处理网络</th><th>交易哈希</th><th>付款方 (From)</th><th>收款方 (To)</th><th>金额 (USDT)</th><th>系统时间</th><th>状态 (Status)</th></tr>
                         </table>
                     </div>
                 </div>
@@ -347,7 +356,9 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             data.forEach(row => {
                 const tr = table.insertRow();
                 const netBadge = `<span class="net-badge net-${row.network}">${row.network}</span>`;
-                const toAddr = row.to_address ? `<span class="address-tag">${row.to_address.substring(0,8)}...</span>` : '-';
+                // 分离付款方与收款方 UI（使用不同底色做区分）
+                const fromAddr = row.from_address ? `<span class="address-tag" style="background:#f1f5f9; color:#64748b; border: 1px solid #e2e8f0;">${row.from_address.substring(0,8)}...</span>` : '-';
+                const toAddr = row.to_address ? `<span class="address-tag" style="border: 1px solid #bae6fd;">${row.to_address.substring(0,8)}...</span>` : '-';
                 
                 let explorerUrl = "#";
                 if(row.network === 'TRON') explorerUrl = `https://tronscan.org/#/transaction/${row.tx_hash}`;
@@ -355,13 +366,22 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
                 if(row.network === 'ETH') explorerUrl = `https://etherscan.io/tx/${row.tx_hash}`;
                 if(row.network === 'AVAX') explorerUrl = `https://snowtrace.io/tx/${row.tx_hash}`;
 
+                // 状态中英文映射器
+                let statusStr = (row.status || 'pending').toLowerCase();
+                let statusMap = {
+                    'pending': { text: '处理中 (Pending)', class: 'status-pending' },
+                    'success': { text: '已确认 (Success)', class: 'status-success' }
+                };
+                let currentStatus = statusMap[statusStr] || { text: row.status.toUpperCase(), class: 'status-success' };
+
                 tr.innerHTML = `
                     <td>${netBadge}</td>
                     <td><a href="${explorerUrl}" target="_blank" class="hash-tag">${row.tx_hash.substring(0,10)}...</a></td>
+                    <td>${fromAddr}</td>
                     <td>${toAddr}</td>
-                    <td><strong style="color:#e67e22; font-size:1.1em;">${row.amount}</strong></td>
-                    <td><span style="color:var(--text-muted)">${new Date(row.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}</span></td>
-                    <td><span class="status-success">${row.status.toUpperCase()}</span></td>
+                    <td><strong style="color:#10b981; font-size:1.15em; font-family: monospace;">+ ${row.amount}</strong></td>
+                    <td><span style="color:var(--text-muted); font-size:0.85em;">${new Date(row.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'})}</span></td>
+                    <td><span class="status-badge ${currentStatus.class}">${currentStatus.text}</span></td>
                 `;
             });
 
