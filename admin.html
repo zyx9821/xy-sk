@@ -247,18 +247,16 @@
                 
                 <div id="add_address_form" style="display:none; background:#f8fafc; padding:20px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:20px;">
                     <div style="display:flex; margin-bottom:15px;">
+						<div style="flex:1.1;">
+                            <label style="font-size:0.9rem;">指定扫描网络 (仅针对多链地址)</label>
+                            <select id="new_addr_network" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;">
+                                <option value="auto">智能自动识别 (全网并发捕获)</option>
+                            </select>
+                        </div>
                         <div style="flex:2;"><label style="font-size:0.9rem;">图标链接 (选填)</label><input type="text" id="new_addr_icon" placeholder="https://..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                         <div style="flex:1;"><label style="font-size:0.9rem;">网络/名称</label><input type="text" id="new_addr_name" placeholder="如: 波场主钱包" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                         <div style="flex:2;"><label style="font-size:0.9rem;">钱包地址</label><input type="text" id="new_addr_val" placeholder="输入 T 或 0x 开头的地址" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                         <div style="flex:1;"><label style="font-size:0.9rem;">备注 (选填)</label><input type="text" id="new_addr_remark" placeholder="内部备注信息" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
-                    </div>
-					<div style="display:flex; margin-bottom:15px;">
-                        <div style="flex:1;">
-                            <label style="font-size:0.9rem;">指定扫描网络 (仅针对多链地址)</label>
-                            <select id="new_addr_network" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;">
-                                <option value="auto">🤖 智能自动识别 (全网并发捕获)</option>
-                            </select>
-                        </div>
                     </div>
                     <div style="text-align:center;">
                         <button class="btn" style="background:#94a3b8; margin-right:10px;" onclick="resetFormState('address')">取消</button>
