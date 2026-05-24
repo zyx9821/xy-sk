@@ -268,6 +268,7 @@
                         <thead>
                             <tr>
                                 <th>序数ID</th>
+                                <th>网络节点</th>
                                 <th>图标/图片</th>
                                 <th>名称</th>
                                 <th>地址</th>
@@ -277,7 +278,7 @@
                             </tr>
                         </thead>
                         <tbody id="address_list_body">
-                            <tr><td colspan="7" style="text-align:center; color:#94a3b8;">暂无收款地址，请点击右上角增加</td></tr>
+                            <tr><td colspan="8" style="text-align:center; color:#94a3b8;">暂无收款地址，请点击右上角增加</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -710,21 +711,29 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             try {
                 const res = await fetch('/api/addresses');
                 const list = await res.json();
+				// 【新增】拉取 KV 中的地址单链绑定关系
+                const bindRes = await fetch('/api/address-bindings');
+                const bindings = await bindRes.json();
                 globalAddresses = list;
                 const tbody = document.getElementById('address_list_body');
                 tbody.innerHTML = '';
                 
                 if (list.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94a3b8;">暂无收款地址，请点击右上角增加</td></tr>';
+					tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#94a3b8;">暂无收款地址，请点击右上角增加</td></tr>';
                     return;
                 }
 
                 list.forEach(item => {
                     const iconHtml = item.icon ? `<img src="${item.icon}" style="width:39px; height:39px; border-radius:50%;">` : '无';
                     const timeStr = new Date(item.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'});
+                    // 【新增】判断绑定状态并生成对应的彩色徽章 HTML
+                    const boundNet = bindings[item.address.toLowerCase()];
+                    const netBadgeHtml = boundNet ? `<span class="net-badge net-${boundNet}">${boundNet}</span>` : `<span class="net-badge" style="background:#0ea5e9;">全网并发</span>`;
+
                     tbody.innerHTML += `
                         <tr>
                             <td>#${item.id}</td>
+                            <td>${netBadgeHtml}</td>
                             <td>${iconHtml}</td>
                             <td style="font-weight:500;">${item.name}</td>
                             <td style="font-family:monospace; color:#0284c7;">${item.address}</td>
