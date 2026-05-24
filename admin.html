@@ -511,64 +511,101 @@
                 </div>
             </div>
 
-            <div id="docs" class="tab-content">
-                <div class="card">
-                    <div class="card-header"><h3>📖 系统部署与对接使用说明</h3></div>
+            <div class="card">
+                    <div class="card-header"><h3>📖 系统部署与多链对接使用文档</h3></div>
                     <div class="doc-alert">
-                        <strong>架构说明：</strong> 本系统运行在 Cloudflare Workers Serverless 环境下。完全免疫 Ddos，且无需购买任何服务器即可实现秒级波场与 EVM 多链 USDT 收款监听。
+                        <strong>架构特性：</strong> 本矩阵监控基于 Cloudflare Workers 边缘网络构建，网络节点、收款地址均已完成 KV 与驻留内存解耦。系统不仅免疫大规模 DDoS 攻击，且支持零代码动态扩容全新 EVM/Tron 兼容链。
                     </div>
 
                     <div class="doc-section">
-                        <h4>1. 靓号地址添加规则</h4>
+                        <h4>1. 智能多模态靓号路由与单链过滤机制</h4>
+                        <p style="color: #4b5563; font-size: 0.95rem; line-height: 1.6; margin-bottom: 10px;">
+                            系统在扫描时会实时加载【网络节点】中的全量配置，并根据【收款地址】中的指定策略进行双重路由判定：
+                        </p>
+                        <p style="color: #4b5563; font-size: 0.95rem; line-height: 1.6; padding-left: 15px; border-left: 2px solid #cbd5e1;">
+                            - <strong>精准单链绑定：</strong>若地址指定了扫描网络（如绑定了 <code>BSC</code>），扫块引擎执行时将启动精准拦截。在巡检其他链时该地址直接跳过，只调取 BSC 的 RPC 进行分析，这能节省 90% 的公共节点请求额度。<br>
+                            - <strong>智能识别全网并发：</strong>若地址保持默认的 <code>智能自动识别</code>，引擎将根据地址特征将其并发挂载到所有相符架构的网络池中：<br>
+                            &nbsp;&nbsp;• 粘贴以 <code>T</code> 开头的波场地址：自动并发出动全网所有内核类型标记为 <code>tron</code> 的网络。<br>
+                            &nbsp;&nbsp;• 粘贴以 <code>0x</code> 开头且长度为 42 的多链地址：自动并发出动全网所有内核类型标记为 <code>evm</code> 的网络（如 ETH、BSC、Polygon、Base 等）。只要任意一条链有对应代币汇入，均能秒级触发入账。
+                        </p>
+                    </div>
+
+                    <div class="doc-section">
+                        <h4>2. 边缘高频轮询 (Cron Task) 配置</h4>
                         <p style="color: #4b5563; font-size: 0.95rem; line-height: 1.6;">
-                            在【基础配置】的地址池中：<br>
-                            - 只要你输入以 <code>T</code> 开头的地址，系统将自动调用 <strong>TRON (波场)</strong> 引擎进行扫描。<br>
-                            - 只要你输入以 <code>0x</code> 开头且长度为42的地址，系统自动调用 <strong>EVM引擎</strong> 并发扫描 ETH, BSC, AVAX, Arbitrum, Optimism, Polygon, X Layer, OKT 等所有EVM链。<br>
-                            - 只要你输入以 <code>0x</code> 开头且长度为66的地址，系统自动调用 <strong>Aptos</strong> 引擎扫描。<br>
-                            - 只要你输入以 <code>UQ</code> 或 <code>EQ</code> 开头的地址，系统自动调用 <strong>TON</strong> 引擎扫描。<br>
-                            - 只要你输入 Base58 格式（非 T 且非 0x 开头），系统自动调用 <strong>Solana</strong> 引擎扫描。
+                            监控任务默认由全局 <code>scheduled</code> 定时器接管。系统在代码中配置了每分钟自动重置最新块高并向前追溯 50 个区块的防漏防错逻辑。若部署后发现无法自动巡检，请确保您在 Cloudflare 控制台的 <code>Workers -> 设置 -> 触发器 -> 自动化</code> 中正确挂载了 Cron 表达式：<code>* * * * *</code>。
                         </p>
                     </div>
 
                     <div class="doc-section">
-                        <h4>2. 定时轮询 (Cron) 配置须知</h4>
-                        <p style="color: #4b5563; font-size: 0.95rem;">
-                            系统默认通过 <code>wrangler.toml</code> 配置了每分钟一次的自动巡检。如果在 Cloudflare 仪表盘没有生效，请前往 Workers -> 设置 -> 触发器 (Triggers) 中手动添加 Cron 表达式：<code>* * * * *</code>。
-                        </p>
-                    </div>
-
-                    <div class="doc-section">
-                        <h4>3. 前端发卡网 PHP 回调验证代码</h4>
-                        <p style="color: #4b5563; font-size: 0.95rem;">
-                            当系统查到账单后，会向你在【回调路由】中配置的 URL 发送 POST 数据包。由于我们支持了全链环境，为了防止重放攻击，<strong>签名校验必须包含 network 字段</strong>。请将以下代码集成到你的发卡网中处理回调：
+                        <h4>3. 下游接货网关防双花安全验签 (PHP 示例)</h4>
+                        <p style="color: #4b5563; font-size: 0.95rem; line-height: 1.6; margin-bottom: 10px;">
+                            由于系统支持多链混扫，**必须杜绝攻击者使用某一条链上的历史交易哈希去欺骗其他链网关的行为**。因此系统向您的 <code>CALLBACK_URL</code> 发送 POST 数据包时，加密签名的拼接顺序已升级为：<code>网络标识 + 交易哈希 + 金额 + APP_SECRET</code>。
                         </p>
                         <div class="doc-code">
 &lt;?php
-// 接收监控矩阵发来的原始 JSON 数据
-$jsonStr = file_get_contents('php://input');
-$post = json_decode($jsonStr, true);
+// 接收监控矩阵发来的原始 JSON 报文
+$rawBody = file_get_contents('php://input');
+$notifyData = json_decode($rawBody, true);
 
-// 1. 获取基础数据
-$network = $post['network'];       // TRON / BSC / ETH / AVAX
-$tx_hash = $post['tx_hash'];       // 交易哈希，请作为唯一索引防重复发卡
-$amount = $post['amount'];         // 实际到账的 USDT 金额
-$sign = $post['sign'];             // 签名密文
+if (!$notifyData) die(json_encode(["code" => 400, "msg" => "无效请求"]));
 
-// 2. 验证签名 (防篡改核心逻辑)
-// 拼接规则：网络标识 + 交易哈希 + 金额 + 你在面板设置的APP_SECRET
-$my_secret = "这里填你面板里的APP_SECRET";
-$calc_sign = hash('sha256', $network . $tx_hash . $amount . $my_secret);
+// 1. 提取订单核心验签要素
+$network      = $notifyData['network'];       // 动态拿到到账的网络标识，如 BSC / TRON
+$tx_hash      = $notifyData['tx_hash'];       // 区块链唯一交易哈希（请设为数据库唯一索引防止重放）
+$amount       = $notifyData['amount'];         // 过滤精度后的纯数字转账金额，如 100.5
+$signReceived = $notifyData['sign'];           // 矩阵网关生成的签名密文
+$timestamp    = $notifyData['timestamp'];      // 矩阵秒级捕获时刻的时间戳
 
-if ($calc_sign !== $sign) {
-    die(json_encode(["code" => 403, "msg" => "签名校验失败！"]));
+// 2. 严格按顺序构造本地签名
+$app_secret   = "您在回调路由面板中自定义设置的加密密钥";
+$stringToSign = $network . $tx_hash . $amount . $app_secret;
+$calculatedSign = hash('sha256', $stringToSign);
+
+// 3. 校验对比
+if ($calculatedSign !== $signReceived) {
+    http_response_code(403);
+    die(json_encode(["code" => 403, "msg" => "网关验证未通过：签名非法"]));
 }
 
-// 3. 校验通过，执行发卡网发货逻辑
-// TODO: 去数据库查询对应金额的未支付订单，并进行卡密发放
+// 4. 验签通过，执行发货/充值业务逻辑
+// TODO: 执行具体的卡密发放或商户余额入账
 // ...
 
-echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
+echo json_encode(["code" => 200, "msg" => "SUCCESS"]);
 ?&gt;
+                        </div>
+                    </div>
+
+                    <div class="doc-section" style="margin-bottom: 0;">
+                        <h4>4. 🪐 完整对接流转与报文数据示例</h4>
+                        <p style="color: #4b5563; font-size: 0.95rem; line-height: 1.6; margin-bottom: 10px;">
+                            为了方便调试，以下展示一个真实的资产充值触发事件全流程演练。
+                        </p>
+                        <div style="background: #f1f5f9; padding: 15px; border-radius: 6px; font-size: 0.85rem; color: #334155; line-height: 1.6; margin-bottom: 12px;">
+                            <strong>情景设定：</strong><br>
+                            - 管理员在【网络节点】中配置了网络标识 <code>BSC</code>，设置精度 <code>18</code>。<br>
+                            - 管理员在【回调路由】中添加了发卡网，设置通信密钥 <code>my_secret_888</code>。<br>
+                            - 某客户通过币安智能链（BSC）向您的钱包地址成功转账了 <strong>250 USDT</strong>。
+                        </div>
+                        <p style="color: #4b5563; font-size: 0.9rem; font-weight: 600; margin: 10px 0 5px 0;">(1) 矩阵监控引擎自动向发卡网网关发送的异步 POST 原始 JSON 报文示例：</p>
+                        <div class="doc-code" style="background: #0f172a; color: #38bdf8;">
+{
+    "network": "BSC",
+    "tx_hash": "0x4f87a321ba99dcd7654321098bcdaeafe0123456789abcdef0123456789abcde",
+    "amount": "250",
+    "from_address": "0x9876543210abcdef0123456789abcdef01234567",
+    "to_address": "0x1234567890abcdef0123456789abcdef01234567",
+    "sign": "9e2c450a8b12f6cd7e89ab10fe34dcba56781234efcdab5678901234abcdef01",
+    "timestamp": 1779600000000
+}
+                        </div>
+                        <p style="color: #4b5563; font-size: 0.9rem; font-weight: 600; margin: 12px 0 5px 0;">(2) 发卡网接收端后台执行的 SHA256 签名拼接拆解：</p>
+                        <div style="background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; font-size: 0.85rem; font-family: monospace; line-height: 1.5; color: #334155;">
+                            待签名字串 = network + tx_hash + amount + APP_SECRET<br>
+                            拼接明文 = "BSC" + "0x4f87a321..." + "250" + "my_secret_888"<br>
+                            最终明文 = <span style="color:#e11d48;">"BSC0x4f87a321ba99dcd7654321098bcdaeafe0123456789abcdef0123456789abcde250my_secret_888"</span><br>
+                            哈希结果 = hash('sha256', 最终明文) -> 等于报文中的 sign 密文，对比通过！
                         </div>
                     </div>
                 </div>
