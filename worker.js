@@ -52,7 +52,36 @@ export default {
             return new Response("账号或密码错误", { status: 401 });
         }
         if (url.pathname === "/") {
-            return new Response(`<form action="/login" method="POST" style="margin: 100px auto; width: 300px; text-align: center; font-family: sans-serif;"><h2>全链矩阵登录</h2><input name="username" placeholder="用户名" required style="margin: 10px; padding: 10px; width: 80%;"><br><input type="password" name="password" placeholder="密码" required style="margin: 10px; padding: 10px; width: 80%;"><br><button type="submit" style="padding: 10px 20px; background: #3498db; color: white; border: none;">登录</button></form>`, { headers: { "Content-Type": "text/html;charset=UTF-8" } });
+            return new Response(`
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>矩阵控制台登录</title>
+    <style>
+        body { margin: 0; font-family: system-ui, sans-serif; background: #f3f4f6; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login-card { background: white; padding: 40px 30px; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.04); width: 100%; max-width: 320px; border: 1px solid #e5e7eb; box-sizing: border-box; }
+        .login-card h2 { margin: 0 0 24px; color: #1f2937; font-size: 1.35rem; font-weight: 600; text-align: center; display: flex; justify-content: center; align-items: center; }
+        .login-card h2 span { color: #3b82f6; margin-right: 8px; font-size: 1.1rem; }
+        .input-group { margin-bottom: 16px; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; outline: none; transition: 0.2s; box-sizing: border-box; font-size: 0.95rem; background: #f8fafc; }
+        .input-group input:focus { border-color: #3b82f6; background: white; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        .login-btn { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: 0.2s; font-weight: 500; margin-top: 8px; }
+        .login-btn:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2><span>●</span>夏雨全链矩阵</h2>
+        <form action="/login" method="POST">
+            <div class="input-group"><input type="text" name="username" placeholder="管理员账号" required></div>
+            <div class="input-group"><input type="password" name="password" placeholder="安全密码" required></div>
+            <button type="submit" class="login-btn">安全登录</button>
+        </form>
+    </div>
+</body>
+</html>`, { headers: { "Content-Type": "text/html;charset=UTF-8" } });
         }
 
         const cookie = request.headers.get("Cookie") || "";
