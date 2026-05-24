@@ -225,14 +225,14 @@
                     <div style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; border-left: 4px solid var(--primary);">
                         <h4 style="margin-top:0; color:var(--text-main); font-size:1rem;">💡 回调路由参数说明：</h4>
                         <ul style="font-size: 0.85rem; color: #4b5563; line-height: 1.8; padding-left: 20px; margin-bottom:0;">
-                            <li><strong>节点序数ID：</strong>系统 D1 数据库主键自动递增生成的唯一节点序列号，无法篡改。</li>
-                            <li><strong>图标：</strong>节点的视觉徽标链接（例如各发卡站的小图标），直观区分不同的分发终端。</li>
-                            <li><strong>名称：</strong>自定义的业务系统代号。如“发卡A站”、“测试分流端”，方便多商户环境下的分类辨识。</li>
-                            <li><strong>CALLBACK_URL：</strong>外部接收充值入账通知的网关 API 接口<code>https://yourdomain.com/callback.php</code>。当链上扫出新订单时，系统会向此地址发送异步 <code>POST</code> 核心请求。</li>
-                            <li><strong>APP_SECRET：</strong>通讯层加密签名密钥。系统通过哈希算法将订单要素与该密钥拼接。外部接收端必须持有相同密钥进行哈希对比验签，防止非法伪造回调。</li>
-                            <li><strong>绑定靓号池：</strong>路由过滤器。可限定该节点仅接收指定收款地址的通知（支持英文逗号分隔多地址）；若填写 <code>*</code> 则不作筛选，默认分发所有收款地址的所有流水。</li>
-                            <li><strong>添加日期：</strong>该路由规则进入系统的初始化时刻，系统自动锁定并转换为 Asia/Shanghai 标准时间。</li>
-                            <li><strong>备注：</strong>面向管理员的补充注释区，可备注对接负责人、结算账期等附加文本。</li>
+                            <li><strong>节点序数ID：</strong>系统 D1 数据库主键自动递增生成的唯一通道序列号，全局唯一。</li>
+                            <li><strong>图标：</strong>节点的视觉徽标链接（如各发卡站的 Favicon），用于在多商户流转时直观区分不同的接货终端。</li>
+                            <li><strong>名称：</strong>自定义的下游商户或系统代号。如“发卡A站”、“大客户B端”，方便多商户环境下的分类辨识。</li>
+                            <li><strong>CALLBACK_URL：</strong>外部接收充值入账通知的网关 API 接口。当您在【网络节点】中配置的任意一条激活区块链上扫出新订单时，本矩阵系统都会向此地址发起异步 <code>POST</code> 核心请求，数据包中会动态携带 <code>network</code> 字段。</li>
+                            <li><strong>APP_SECRET (核心变更)：</strong>通讯层安全验签密钥。**【极重要】**由于系统已升级为全动态矩阵架构，为了彻底阻断黑客利用“同一笔交易哈希在不同重放链”进行双花攻击，系统在哈希算法中引入了网络隔离。当前的签名拼接规则为：<code>网络标识 + 交易哈希 + 到账金额 + APP_SECRET</code>。下游接收端必须使用 SHA256 严格按此顺序组装验签！</li>
+                            <li><strong>绑定靓号池：</strong>路由过滤器。可限定该回调通道仅接收指定收款地址的通知（支持英文逗号分隔多地址）；若填写 <code>*</code> 则默认不作过滤，放行全网所有收款地址的所有多链流水。</li>
+                            <li><strong>添加日期：</strong>该通道规则进入系统的初始化时刻，系统已自动锁定并转换为 Asia/Shanghai 标准北京时间。</li>
+                            <li><strong>备注：</strong>面向管理员的补充注释区，可备注对接负责人、结算账期或商户费率等附加说明。</li>
                         </ul>
                     </div>
                 </div>
@@ -401,15 +401,21 @@
 </div>
                     <ul style="font-size: 0.85rem; color: #4b5563; line-height: 1.8; padding-left: 20px; margin-bottom:0;">
                         <li><strong>序数ID：</strong>系统 D1 数据库主键自动递增生成的唯一地址序列号，无法篡改。</li>
+                        <li><strong>网络节点：</strong>显示该地址的扫描路由状态。若显示蓝色的 <code style="color:#0ea5e9; background:#e0f2fe;">全网并发</code>，代表系统会同时巡检该架构下的所有网络；若显示具体的网络标识（如 BSC），代表系统已将其精确定位至该单链，不再浪费其他链的 RPC 请求资源。</li>
                         <li><strong>图标/图片：</strong>该地址的视觉徽标链接，方便在多钱包、多网络环境下直观辨别区分。</li>
                         <li><strong>网络/名称：</strong>自定义的钱包标识名。如“波场发卡主钱包”、“业务B分流号”。</li>
-                        <li><strong>钱包地址（核心）：</strong>用于接收 USDT 的实际链上地址。系统内置强大的<strong>多模态智能路由</strong>，无需手动选择网络，只需粘贴地址即可自动识别并挂载对应扫块引擎：
+                        <li><strong>钱包地址与精准路由（核心）：</strong>用于接收 USDT 的实际链上地址。系统内置强大的<strong>多模态动态过滤器</strong>，支持以下两种极速捕获机制：
                             <ul style="margin-top: 5px; margin-bottom: 5px; list-style-type: circle; color: #1f2937;">
-                                <li>输入以 <code>T</code> 开头的地址：系统自动挂载 <strong><code>TRON (波场)</code></strong> 引擎。</li>
-                                <li>输入以 <code>0x</code> 开头且长度为 42 的地址：系统自动并发挂载 <strong>13条 EVM 网络引擎</strong> (包含<strong><code>ETH</code><code>BSC</code><code>AVAX</code><code>Arbitrum</code><code>Optimism</code><code>Polygon</code><code>X Layer</code><code>OKT</code><code>Berachain</code><code>Monad</code><code>Plasma</code><code>Tempo</code><code>Unichain</code></strong>)。只要上述任意一条链有资金汇入，系统均能秒级捕获。</li>
-                                <li>输入以 <code>0x</code> 开头且长度为 66 的地址：系统自动挂载 <strong><code>Aptos</code></strong> 异构引擎。</li>
-                                <li>输入以 <code>UQ</code> 或 <code>EQ</code> 开头的地址：系统自动挂载 <strong><code>TON</code></strong> 异构引擎。</li>
-                                <li>输入常规 Base58 格式地址：系统自动挂载 <strong><code>Solana</code></strong> 异构引擎。</li>
+                                <li><strong>精准单链指定 (推荐)：</strong>如果在添加地址时指定了扫描网络（如选 BSC），系统将启动精准拦截，仅使用您在【网络节点】中配置的对应 RPC 巡检该地址，完美抗限流。</li>
+                                <li><strong>智能自动识别 (全网并发)：</strong>若保持默认的自动识别，系统将读取您在【网络节点】中创建的所有激活网络，并根据地址格式进行动态派发：
+                                    <ul style="list-style-type: square; padding-left: 20px; margin-top: 3px; color: #4b5563;">
+                                        <li>输入以 <code>T</code> 开头的地址：系统自动挂载所有自定义的 <strong>波场 (tron)</strong> 架构网络。</li>
+                                        <li>输入以 <code>0x</code> 开头且长度为 42 的地址：系统自动并发挂载所有自定义的 <strong>以太坊兼容 (evm)</strong> 架构网络（如 ETH、BSC、Polygon、X Layer 等）。只要任意一条链有钱进入，均能秒级捕获。</li>
+                                        <li>输入以 <code>0x</code> 开头且长度为 66 的地址：系统自动挂载 <strong>Aptos (aptos)</strong> 架构网络。</li>
+                                        <li>输入以 <code>UQ</code> 或 <code>EQ</code> 开头的地址：系统自动挂载 <strong>TON (ton)</strong> 架构网络。</li>
+                                        <li>输入常规 Base58 格式地址：系统自动挂载 <strong>Solana (solana)</strong> 架构网络。</li>
+                                    </ul>
+                                </li>
                             </ul>
                         </li>
                         <li><strong>添加日期：</strong>录入系统的初始化时刻，自动转换为 Asia/Shanghai 标准时区。</li>
