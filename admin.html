@@ -27,7 +27,7 @@
         .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .top-header { height: 70px; background: var(--bg-surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 32px; justify-content: space-between; }
         .header-title { font-size: 1.1rem; font-weight: 600; }
-        .content-area { flex: 1; padding: 32px; overflow-y: auto; }
+        .content-area { flex: 1; padding: 15px 32px; overflow-y: auto; }
         
         .tab-content { display: none; animation: slideUp 0.3s; }
         .tab-content.active { display: block; }
@@ -112,7 +112,7 @@
         /* 文档说明页样式 */
         .doc-section { margin-bottom: 30px; }
         .doc-section h4 { color: var(--primary); margin-bottom: 10px; font-size: 1.1rem; display: flex; align-items: center; }
-		.doc-code { background: #1e293b; color: #a5b4fc; padding: 15px; border-radius: 8px; font-family: monospace; overflow-x: auto; font-size: 0.8rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: break-word; }
+		.doc-code { background: #1e293b; color: #a5b4fc; padding: 0 15px; border-radius: 8px; font-family: monospace; overflow-x: auto; font-size: 0.8rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: break-word; }
         .doc-alert { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; margin-bottom: 20px; border-radius: 0 8px 8px 0; color: #92400e; font-size: 0.9rem; }
         #add_webhook_form > div:first-child > div, #add_address_form > div:first-child > div, #add_net_form > div:first-child > div { padding-right: 8px; margin-bottom: 10px; box-sizing: border-box; }
         #add_webhook_form > div:first-child > div:last-child, #add_address_form > div:first-child > div:last-child, #add_net_form > div:first-child > div:last-child { padding-right: 0; }
@@ -175,6 +175,17 @@
                             </tr>
                         </table>
                     </div>
+                </div>
+				<div style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; border-left: 4px solid var(--primary);">
+                    <h4 style="margin-top:0; color:var(--text-main); font-size:1rem;">💡 全链交易流水字段与流转说明：</h4>
+                    <ul style="font-size: 0.85rem; color: #4b5563; line-height: 1.8; padding-left: 20px; margin-bottom:0;">
+                        <li><strong>处理网络：</strong>展示引擎捕获到该笔资金的具体区块链标识（如 TRON、BSC）。系统在底层已实现网络隔离，同哈希异链的数据不会发生串号或双花冲突。</li>
+                        <li><strong>交易哈希：</strong>链上唯一转账凭证。文字为超链接状态，点击即可根据处理网络自动路由，跳转至对应的官方区块链浏览器进行区块高度查验。</li>
+                        <li><strong>付款方 (From) 与 收款方 (To)：</strong>分别记录发币地址与您在系统配置的接单靓号。UI 层已根据出入金角色进行了蓝灰色块的视觉隔离。</li>
+                        <li><strong>金额 (USDT)：</strong>此处显示的金额是扫块引擎通过读取您在【网络节点】中配置的“精度 (Decimals)”（如 6 或 18），自动执行换算除法后得出的真实法币数值。</li>
+                        <li><strong>系统时间：</strong>该笔链上流水被 Workers 边缘计算节点拦截并写入底层 D1 数据库的绝对时间，前端已强制格式化为 <code>Asia/Shanghai</code> 北京时间。</li>
+                        <li><strong>操作与清理：</strong>由于全网高频轮询会累积大量流水，系统提供了“批量删除”机制。为了避免 Cloudflare D1 存储容量溢出，建议定期对历史无争议的老旧账单进行批量勾选清理，但请务必保留近期的作为异步回调排查依据。</li>
+                    </ul>
                 </div>
             </div>
 
