@@ -173,15 +173,20 @@ export default {
             }
         }
         // 【新增】接收地址精准单链绑定关系的 API
-        if (url.pathname === "/api/address-bindings" && request.method === "POST") {
-            const { address, network } = await request.json();
-            const bindings = await env.kv.get("address_to_network", "json") || {};
-            if (network && network !== "auto") bindings[address.toLowerCase()] = network.toUpperCase();
-            else delete bindings[address.toLowerCase()];
-            await env.kv.put("address_to_network", JSON.stringify(bindings));
-            return new Response(JSON.stringify({ success: true }));
+        if (url.pathname === "/api/address-bindings") {
+            if (request.method === "GET") {
+                const bindings = await env.kv.get("address_to_network", "json") || {};
+                return new Response(JSON.stringify(bindings), { headers: { "Content-Type": "application/json" } });
+            }
+            if (request.method === "POST") {
+                const { address, network } = await request.json();
+                const bindings = await env.kv.get("address_to_network", "json") || {};
+                if (network && network !== "auto") bindings[address.toLowerCase()] = network.toUpperCase();
+                else delete bindings[address.toLowerCase()];
+                await env.kv.put("address_to_network", JSON.stringify(bindings));
+                return new Response(JSON.stringify({ success: true }));
+            }
         }
-
         // 手动触发全链同步
         if (url.pathname === "/api/sync" && request.method === "POST") {
             await this.syncAllChainsData(env);
