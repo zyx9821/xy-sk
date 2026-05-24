@@ -1,26 +1,22 @@
 // worker.js
 import dashboardHTML from "./admin.html";
+// 【新增】KV与内存双重缓存架构逻辑
+let cachedNetworks = null;
+let lastNetworkCacheTime = 0;
 
-// 全链 USDT 合约与 RPC 节点配置
-const NETWORKS = {
-    TRON: { type: 'tron', usdt: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', decimals: 6 },
-    ETH:  { type: 'evm', rpc: 'https://cloudflare-eth.com', usdt: '0xdac17f958d2ee523a2206206994597c13d831ec7', decimals: 6 },
-    BSC:  { type: 'evm', rpc: 'https://bsc-dataseed.binance.org', usdt: '0x55d398326f99059ff775485246999027b3197955', decimals: 18 },
-    AVAX: { type: 'evm', rpc: 'https://api.avax.network/ext/bc/C/rpc', usdt: '0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7', decimals: 6 },
-    ARBITRUM: { type: 'evm', rpc: 'https://arb1.arbitrum.io/rpc', usdt: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9', decimals: 6 },
-    OPTIMISM: { type: 'evm', rpc: 'https://mainnet.optimism.io', usdt: '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58', decimals: 6 },
-    POLYGON:  { type: 'evm', rpc: 'https://polygon-rpc.com', usdt: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f', decimals: 6 },
-    XLAYER:   { type: 'evm', rpc: 'https://rpc.xlayer.tech', usdt: '0x1e4a5963abfd975d8c9021ce480b42188849d41d', decimals: 6 },
-    OKT:      { type: 'evm', rpc: 'https://exchainrpc.okex.org', usdt: '0x382bb369d343125bfb2117af9c149795c6c65c50', decimals: 18 },
-    BERACHAIN:{ type: 'evm', rpc: 'https://rpc.berachain.com', usdt: '0x0000000000000000000000000000000000000000', decimals: 18 },
-    MONAD:    { type: 'evm', rpc: 'https://rpc.monad.xyz', usdt: '0x0000000000000000000000000000000000000000', decimals: 6 },
-    PLASMA:   { type: 'evm', rpc: 'https://rpc.plasmachain.com', usdt: '0x0000000000000000000000000000000000000000', decimals: 6 },
-    TEMPO:    { type: 'evm', rpc: 'https://rpc.tempo.network', usdt: '0x0000000000000000000000000000000000000000', decimals: 6 },
-    UNICHAIN: { type: 'evm', rpc: 'https://mainnet.unichain.org', usdt: '0x0000000000000000000000000000000000000000', decimals: 6 },
-    APTOS:    { type: 'aptos', rpc: 'https://fullnode.mainnet.aptoslabs.com/v1' },
-    SOLANA:   { type: 'solana', rpc: 'https://api.mainnet-beta.solana.com' },
-    TON:      { type: 'ton', rpc: 'https://toncenter.com/api/v2/jsonRPC' }
-};
+async function getDynamicNetworks(env) {
+    const now = Date.now();
+    if (!cachedNetworks || (now - lastNetworkCacheTime > 60000)) {
+        const kvData = await env.kv.get("system_networks", "json");
+        cachedNetworks = kvData || {
+            TRON: { type: 'tron', usdt: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', decimals: 6 },
+            ETH:  { type: 'evm', rpc: 'https://cloudflare-eth.com', usdt: '0xdac17f958d2ee523a2206206994597c13d831ec7', decimals: 6 },
+            BSC:  { type: 'evm', rpc: 'https://bsc-dataseed.binance.org', usdt: '0x55d398326f99059ff775485246999027b3197955', decimals: 18 }
+        };
+        lastNetworkCacheTime = now;
+    }
+    return cachedNetworks;
+}
 // EVM ERC20 Transfer 事件的 Keccak-256 签名
 const EVM_TRANSFER_SIG = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 
@@ -164,6 +160,28 @@ export default {
             }
         }
 
+        // 【新增】网络节点池动态管理 API
+        if (url.pathname === "/api/networks") {
+            if (request.method === "GET") {
+                return new Response(JSON.stringify(await getDynamicNetworks(env)), { headers: { "Content-Type": "application/json" } });
+            }
+            if (request.method === "POST") {
+                const newNetworks = await request.json();
+                await env.kv.put("system_networks", JSON.stringify(newNetworks));
+                cachedNetworks = newNetworks; lastNetworkCacheTime = Date.now();
+                return new Response(JSON.stringify({ success: true }));
+            }
+        }
+        // 【新增】接收地址精准单链绑定关系的 API
+        if (url.pathname === "/api/address-bindings" && request.method === "POST") {
+            const { address, network } = await request.json();
+            const bindings = await env.kv.get("address_to_network", "json") || {};
+            if (network && network !== "auto") bindings[address.toLowerCase()] = network.toUpperCase();
+            else delete bindings[address.toLowerCase()];
+            await env.kv.put("address_to_network", JSON.stringify(bindings));
+            return new Response(JSON.stringify({ success: true }));
+        }
+
         // 手动触发全链同步
         if (url.pathname === "/api/sync" && request.method === "POST") {
             await this.syncAllChainsData(env);
@@ -192,42 +210,30 @@ export default {
             // 从 D1 关系型数据库提取当前处于激活状态(enabled=1)的外部业务回调路由节点
             const { results: webhooks } = await env.db.prepare("SELECT * FROM webhooks WHERE enabled = 1").all();
 
-            // 地址分类路由
-            const tronAddrs = addresses.filter(a => a.startsWith("T"));
-            const evmAddrs = addresses.filter(a => a.startsWith("0x") && a.length === 42);
-            const aptosAddrs = addresses.filter(a => a.startsWith("0x") && a.length === 66);
-            const tonAddrs = addresses.filter(a => a.startsWith("UQ") || a.startsWith("EQ"));
-            const solAddrs = addresses.filter(a => !a.startsWith("0x") && !a.startsWith("T") && !a.startsWith("UQ") && !a.startsWith("EQ") && a.length >= 32);
-
-            // 构造异步任务数组，让所有链并发执行
+            // 【修改】动态加载网络与 KV 绑定表
+            const NETWORKS = await getDynamicNetworks(env);
+            const bindings = await env.kv.get("address_to_network", "json") || {};
             const syncTasks = [];
 
-            // 1. 装载 TRON 任务
-            if (tronAddrs.length > 0) {
-                syncTasks.push(this.syncTronNetwork(env, tronAddrs, webhooks));
+            for (const [netName, netConfig] of Object.entries(NETWORKS)) {
+                const targetAddresses = addresses.filter(addr => {
+                    const boundNet = bindings[addr.toLowerCase()];
+                    if (netConfig.type === 'tron') return addr.startsWith("T");
+                    if (netConfig.type === 'evm' && addr.startsWith("0x") && addr.length === 42) return !boundNet || boundNet === netName;
+                    if (netConfig.type === 'aptos' && addr.startsWith("0x") && addr.length === 66) return !boundNet || boundNet === netName;
+                    if (netConfig.type === 'ton' && (addr.startsWith("UQ") || addr.startsWith("EQ"))) return !boundNet || boundNet === netName;
+                    if (netConfig.type === 'solana') return !addr.startsWith("0x") && !addr.startsWith("T") && !addr.startsWith("UQ") && !addr.startsWith("EQ") && addr.length >= 32 && (!boundNet || boundNet === netName);
+                    return false;
+                });
+
+                if (targetAddresses.length > 0) {
+                    if (netConfig.type === 'tron') syncTasks.push(this.syncTronNetwork(env, netConfig, targetAddresses, webhooks));
+                    else if (netConfig.type === 'evm') syncTasks.push(this.syncEVMNetwork(env, netName, netConfig, targetAddresses, webhooks));
+                    else if (netConfig.type === 'aptos') syncTasks.push(this.syncAptosNetwork(env, targetAddresses, webhooks));
+                    else if (netConfig.type === 'solana') syncTasks.push(this.syncSolanaNetwork(env, targetAddresses, webhooks));
+                    else if (netConfig.type === 'ton') syncTasks.push(this.syncTonNetwork(env, targetAddresses, webhooks));
+                }
             }
-            // 2. 装载 EVM 任务 (ETH, BSC, AVAX)
-            if (evmAddrs.length > 0) {
-                syncTasks.push(this.syncEVMNetwork(env, 'ETH', NETWORKS.ETH, evmAddrs, webhooks));
-                syncTasks.push(this.syncEVMNetwork(env, 'BSC', NETWORKS.BSC, evmAddrs, webhooks));
-                syncTasks.push(this.syncEVMNetwork(env, 'AVAX', NETWORKS.AVAX, evmAddrs, webhooks));
-                
-            syncTasks.push(this.syncEVMNetwork(env, 'ARBITRUM', NETWORKS.ARBITRUM, evmAddrs, webhooks));
-                syncTasks.push(this.syncEVMNetwork(env, 'OPTIMISM', NETWORKS.OPTIMISM, evmAddrs, webhooks));
-                syncTasks.push(this.syncEVMNetwork(env, 'POLYGON', NETWORKS.POLYGON, evmAddrs, webhooks));
-                syncTasks.push(this.syncEVMNetwork(env, 'XLAYER', NETWORKS.XLAYER, evmAddrs, webhooks));
-                syncTasks.push(this.syncEVMNetwork(env, 'OKT', NETWORKS.OKT, evmAddrs, webhooks));
-                syncTasks.push(this.syncEVMNetwork(env, 'BERACHAIN', NETWORKS.BERACHAIN, evmAddrs, webhooks));
-                syncTasks.push(this.syncEVMNetwork(env, 'MONAD', NETWORKS.MONAD, evmAddrs, webhooks));
-                syncTasks.push(this.syncEVMNetwork(env, 'PLASMA', NETWORKS.PLASMA, evmAddrs, webhooks));
-                syncTasks.push(this.syncEVMNetwork(env, 'TEMPO', NETWORKS.TEMPO, evmAddrs, webhooks));
-                syncTasks.push(this.syncEVMNetwork(env, 'UNICHAIN', NETWORKS.UNICHAIN, evmAddrs, webhooks));
-            }
-            
-            // 3. 装载异构链任务 (Aptos, Solana, TON)
-            if (aptosAddrs.length > 0) syncTasks.push(this.syncAptosNetwork(env, aptosAddrs, webhooks));
-            if (solAddrs.length > 0) syncTasks.push(this.syncSolanaNetwork(env, solAddrs, webhooks));
-            if (tonAddrs.length > 0) syncTasks.push(this.syncTonNetwork(env, tonAddrs, webhooks));
             // 并发执行所有链的扫块
             await Promise.allSettled(syncTasks);
 
@@ -289,19 +295,23 @@ export default {
     },
 
     // --- 波场 TRON 同步核心 ---
-    async syncTronNetwork(env, addresses, webhooks) {
+    async syncTronNetwork(env, netConfig, addresses, webhooks) {
         let minTimestamp = parseInt(await env.kv.get("last_check_tron") || (Date.now() - 3600000));
         let globalNewestTime = minTimestamp;
 
         for (const myAddress of addresses) {
             try {
-                const response = await fetch(`https://api.trongrid.io/v1/accounts/${myAddress}/transactions/trc20?contract_address=${NETWORKS.TRON.usdt}&min_timestamp=${minTimestamp}`);
+                // 【修正】使用动态传入的 netConfig.usdt，彻底摆脱写死的常量
+                const response = await fetch(`https://api.trongrid.io/v1/accounts/${myAddress}/transactions/trc20?contract_address=${netConfig.usdt}&min_timestamp=${minTimestamp}`);
                 const json = await response.json();
 
                 if (json.data && json.data.length > 0) {
                     for (const tx of json.data) {
                         if (tx.to === myAddress) {
-                            const amountUSDT = (parseInt(tx.value) / 1000000).toString();
+                            // 金额转换也可以使用动态精度 (波场 USDT 默认是 6)
+                            const decimals = netConfig.decimals || 6;
+                            const amountUSDT = (parseInt(tx.value) / Math.pow(10, decimals)).toString();
+                            
                             await this.saveAndNotify(env, {
                                 network: 'TRON', txHash: tx.transaction_id, amount: amountUSDT, fromAddr: tx.from, toAddr: tx.to, timestamp: tx.block_timestamp
                             }, webhooks);
