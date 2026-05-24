@@ -549,7 +549,9 @@
 $rawBody = file_get_contents('php://input');
 $notifyData = json_decode($rawBody, true);
 
-if (!$notifyData) die(json_encode(["code" => 400, "msg" => "无效请求"]));
+if (!$notifyData) {
+    die(json_encode(["code" => 400, "msg" => "无效请求"]));
+}
 
 // 1. 提取订单核心验签要素
 $network      = $notifyData['network'];       // 动态拿到到账的网络标识，如 BSC / TRON
