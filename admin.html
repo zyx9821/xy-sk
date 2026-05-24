@@ -112,7 +112,7 @@
         /* 文档说明页样式 */
         .doc-section { margin-bottom: 30px; }
         .doc-section h4 { color: var(--primary); margin-bottom: 10px; font-size: 1.1rem; display: flex; align-items: center; }
-        .doc-code { background: #1e293b; color: #a5b4fc; padding: 15px; border-radius: 8px; font-family: monospace; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
+        .doc-code { background: #1e293b; color: #a5b4fc; padding: 15px; border-radius: 8px; font-family: monospace; overflow-x: auto; font-size: 0.8rem; line-height: 1.5; }
         .doc-alert { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; margin-bottom: 20px; border-radius: 0 8px 8px 0; color: #92400e; font-size: 0.9rem; }
         #add_webhook_form > div:first-child > div, #add_address_form > div:first-child > div, #add_net_form > div:first-child > div { padding-right: 8px; margin-bottom: 10px; box-sizing: border-box; }
         #add_webhook_form > div:first-child > div:last-child, #add_address_form > div:first-child > div:last-child, #add_net_form > div:first-child > div:last-child { padding-right: 0; }
@@ -602,7 +602,7 @@ echo json_encode(["code" => 200, "msg" => "SUCCESS"]);
 }
                         </div>
                         <p style="color: #4b5563; font-size: 0.9rem; font-weight: 600; margin: 12px 0 5px 0;">(2) 发卡网接收端后台执行的 SHA256 签名拼接拆解：</p>
-                        <div style="background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; font-size: 0.85rem; font-family: monospace; line-height: 1.5; color: #334155;">
+                        <div style="background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; font-size: 0.8rem; font-family: monospace; line-height: 1.5; color: #334155;">
                             待签名字串 = network + tx_hash + amount + APP_SECRET<br>
                             拼接明文 = "BSC" + "0x4f87a321..." + "250" + "my_secret_888"<br>
                             最终明文 = <span style="color:#e11d48;">"BSC0x4f87a321ba99dcd7654321098bcdaeafe0123456789abcdef0123456789abcde250my_secret_888"</span><br>
