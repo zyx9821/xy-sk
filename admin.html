@@ -138,6 +138,9 @@
             <div class="nav-item" onclick="switchTab('addresses', '收款地址管理')">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> 收款地址
             </div>
+			<div class="nav-item" onclick="switchTab('networks', '区块链网络分类')">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg> 网络节点
+            </div>
             <div class="nav-item" onclick="switchTab('settings', '全网收款地址池与设置')">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> 基础配置
             </div>
@@ -248,6 +251,14 @@
                         <div style="flex:1;"><label style="font-size:0.9rem;">网络/名称</label><input type="text" id="new_addr_name" placeholder="如: 波场主钱包" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                         <div style="flex:2;"><label style="font-size:0.9rem;">钱包地址</label><input type="text" id="new_addr_val" placeholder="输入 T 或 0x 开头的地址" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
                         <div style="flex:1;"><label style="font-size:0.9rem;">备注 (选填)</label><input type="text" id="new_addr_remark" placeholder="内部备注信息" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                    </div>
+					<div style="display:flex; margin-bottom:15px;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.9rem;">指定扫描网络 (仅针对多链地址)</label>
+                            <select id="new_addr_network" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;">
+                                <option value="auto">🤖 智能自动识别 (全网并发捕获)</option>
+                            </select>
+                        </div>
                     </div>
                     <div style="text-align:center;">
                         <button class="btn" style="background:#94a3b8; margin-right:10px;" onclick="resetFormState('address')">取消</button>
@@ -407,6 +418,33 @@
                     </ul>
                 </div>
             </div>
+			<div id="networks" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>动态网络分类池</h3>
+                        <button class="btn btn-success" onclick="document.getElementById('add_net_form').style.display='block'">+ 新增网络</button>
+                    </div>
+                    <div id="add_net_form" style="display:none; background:#f8fafc; padding:20px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:20px;">
+                        <div style="display:flex; margin-bottom:15px;">
+                            <div style="flex:1;"><label style="font-size:0.9rem;">标识(如 BSC)</label><input type="text" id="net_name_id" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                            <div style="flex:1;"><label style="font-size:0.9rem;">架构(evm/tron)</label><input type="text" id="net_proto_type" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                            <div style="flex:2;"><label style="font-size:0.9rem;">RPC 节点</label><input type="text" id="net_rpc_node" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                            <div style="flex:2;"><label style="font-size:0.9rem;">USDT 合约</label><input type="text" id="net_usdt_token" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                            <div style="flex:1;"><label style="font-size:0.9rem;">精度</label><input type="number" id="net_decimals_num" value="6" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:6px; margin-top:5px;"></div>
+                        </div>
+                        <div style="text-align:center;">
+                            <button class="btn" style="background:#94a3b8; margin-right:10px;" onclick="document.getElementById('add_net_form').style.display='none'">取消</button>
+                            <button class="btn btn-success" onclick="executeSaveNetwork()">确认保存</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>标识</th><th>内核</th><th>RPC</th><th>合约</th><th>精度</th><th>操作</th></tr></thead>
+                            <tbody id="network_render_body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
 
             <div id="settings" class="tab-content">
@@ -494,7 +532,11 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
 
         function resetFormState(type) {
             if(type === 'webhook') { editWebhookId = null; document.getElementById('add_webhook_form').style.display='none'; }
-            if(type === 'address') { editAddressId = null; document.getElementById('add_address_form').style.display='none'; }
+			if(type === 'address') { editAddressId = null; document.getElementById('add_address_form').style.display='none'; 
+                // 【新增】重置网络选择下拉框
+                const netSelect = document.getElementById('new_addr_network');
+                if (netSelect) netSelect.value = 'auto';
+            }
             ['new_wh_name', 'new_wh_url', 'new_wh_secret', 'new_wh_binds', 'new_wh_icon', 'new_wh_remark', 'new_addr_name', 'new_addr_val', 'new_addr_icon', 'new_addr_remark'].forEach(id => {
                 let el = document.getElementById(id);
                 if(el) {
@@ -574,6 +616,8 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
 
             // 异步加载数据库中的全新回调路由列表
             loadWebhooks();
+            // 【新增】启动网络配置拉取
+            renderNetworksGrid();
         }
 
         // ================= 回调路由 CRUD 逻辑 =================
@@ -723,6 +767,12 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             } else {
                 await fetch('/api/addresses', { method: 'POST', body: JSON.stringify(data) });
             }
+			// 【新增】同步将精准绑定关系存入 KV
+            const selectedNet = document.getElementById('new_addr_network').value;
+            await fetch('/api/address-bindings', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ address: data.address, network: selectedNet })
+            });
             resetFormState('address');
             loadAddresses(); // 重新渲染表格
         }
@@ -751,6 +801,67 @@ echo json_encode(["code" => 200, "msg" => "回调处理成功"]);
             };
             await fetch('/api/settings', { method: 'POST', body: JSON.stringify(data) });
             alert('✅ 基础配置保存成功！'); location.reload();
+        }
+		// 【新增】前端网络分类交互逻辑
+        let networkCachePool = {};
+
+        async function renderNetworksGrid() {
+            const res = await fetch('/api/networks');
+            networkCachePool = await res.json();
+            const tbody = document.getElementById('network_render_body');
+            const netSelect = document.getElementById('new_addr_network');
+            
+            tbody.innerHTML = '';
+            if (netSelect) netSelect.innerHTML = '<option value="auto">🤖 智能自动识别 (全网并发捕获)</option>';
+
+            for (const [netKey, conf] of Object.entries(networkCachePool)) {
+                if (netSelect) netSelect.innerHTML += `<option value="${netKey}">${netKey} (${conf.type.toUpperCase()})</option>`;
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="net-badge net-${netKey}">${netKey}</span></td>
+                        <td><strong>${conf.type.toUpperCase()}</strong></td>
+                        <td style="font-family:monospace; font-size:12px;">${conf.rpc || '-'}</td>
+                        <td style="font-family:monospace; font-size:12px; color:#0284c7;">${conf.usdt || '-'}</td>
+                        <td>${conf.decimals}</td>
+                        <td>
+                            <button class="btn" style="background:#f59e0b; padding:4px 8px; font-size:0.8rem; margin-right:5px;" onclick="modifyNetworkRow('${netKey}')">编辑</button>
+                            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="removeNetworkRow('${netKey}')">删除</button>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        async function executeSaveNetwork() {
+            const keyId = document.getElementById('net_name_id').value.trim().toUpperCase();
+            if(!keyId) return alert("标识不能为空");
+            networkCachePool[keyId] = {
+                type: document.getElementById('net_proto_type').value.trim(),
+                rpc: document.getElementById('net_rpc_node').value.trim(),
+                usdt: document.getElementById('net_usdt_token').value.trim(),
+                decimals: parseInt(document.getElementById('net_decimals_num').value) || 6
+            };
+            await fetch('/api/networks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(networkCachePool) });
+            document.getElementById('add_net_form').style.display = 'none';
+            renderNetworksGrid();
+        }
+
+        function modifyNetworkRow(keyId) {
+            const conf = networkCachePool[keyId];
+            if(!conf) return;
+            document.getElementById('net_name_id').value = keyId;
+            document.getElementById('net_proto_type').value = conf.type;
+            document.getElementById('net_rpc_node').value = conf.rpc || '';
+            document.getElementById('net_usdt_token').value = conf.usdt || '';
+            document.getElementById('net_decimals_num').value = conf.decimals;
+            document.getElementById('add_net_form').style.display = 'block';
+        }
+
+        async function removeNetworkRow(keyId) {
+            if(!confirm(`确认删除 ${keyId} 网络？`)) return;
+            delete networkCachePool[keyId];
+            await fetch('/api/networks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(networkCachePool) });
+            renderNetworksGrid();
         }
 
         async function syncChain() {
