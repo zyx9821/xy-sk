@@ -912,7 +912,9 @@ echo json_encode(["code" => 200, "msg" => "SUCCESS"]);
                     const timeStr = new Date(item.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'});
                     // 改为使用序号 ID 获取绑定网络，彻底解耦
                     const boundNet = bindings[item.id.toString()];
-                    const netBadgeHtml = boundNet ? `<span class="net-badge net-${boundNet}">${boundNet}</span>` : `<span class="net-badge" style="background:#0ea5e9;">全网并发</span>`;
+                    // 从全局缓存中获取该网络的颜色配置，如果没有配置则默认 #94a3b8
+                    const netColor = (networkCachePool[boundNet] && networkCachePool[boundNet].color) ? networkCachePool[boundNet].color : '#94a3b8';
+                    const netBadgeHtml = boundNet ? `<span class="net-badge" style="background: ${netColor}">${boundNet}</span>` : `<span class="net-badge" style="background:#0ea5e9;">全网并发</span>`;
 
                     tbody.innerHTML += `
                         <tr>
