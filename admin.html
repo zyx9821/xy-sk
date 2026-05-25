@@ -709,6 +709,7 @@ echo json_encode(["code" => 200, "msg" => "SUCCESS"]);
         let editAddressId = null;
         let globalWebhooks = [];
         let globalAddresses = [];
+		let globalAddressBindings = {}; // 用于全局缓存地址的网络绑定关系
 
         function resetFormState(type) {
             if(type === 'webhook') { editWebhookId = null; document.getElementById('add_webhook_form').style.display='none'; }
@@ -896,6 +897,7 @@ echo json_encode(["code" => 200, "msg" => "SUCCESS"]);
 				// 【新增】拉取 KV 中的地址单链绑定关系
                 const bindRes = await fetch('/api/address-bindings');
                 const bindings = await bindRes.json();
+				globalAddressBindings = bindings; // 保存到全局变量，方便编辑时读取
                 globalAddresses = list;
                 const tbody = document.getElementById('address_list_body');
                 tbody.innerHTML = '';
@@ -965,6 +967,8 @@ echo json_encode(["code" => 200, "msg" => "SUCCESS"]);
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: currentId, network: selectedNet }) // 核心解耦：将 address 换成 id 发送给后端
             });
+			// 延时 800 毫秒，等待 Cloudflare KV 在全球边缘节点完成数据同步
+            await new Promise(r => setTimeout(r, 800));
             resetFormState('address');
             loadAddresses(); // 重新渲染表格
         }
@@ -977,6 +981,7 @@ echo json_encode(["code" => 200, "msg" => "SUCCESS"]);
             document.getElementById('new_addr_val').value = item.address;
             document.getElementById('new_addr_icon').value = item.icon || '';
             document.getElementById('new_addr_remark').value = item.remark || '';
+            document.getElementById('new_addr_network').value = globalAddressBindings[id.toString()] || 'auto';
             document.getElementById('add_address_form').style.display = 'block';
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
