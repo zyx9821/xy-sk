@@ -908,8 +908,8 @@ echo json_encode(["code" => 200, "msg" => "SUCCESS"]);
                 list.forEach(item => {
                     const iconHtml = item.icon ? `<img src="${item.icon}" style="width:39px; height:39px; border-radius:50%;">` : '无';
                     const timeStr = new Date(item.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'});
-                    // 【新增】判断绑定状态并生成对应的彩色徽章 HTML
-                    const boundNet = bindings[item.address.toLowerCase()];
+                    // 改为使用序号 ID 获取绑定网络，彻底解耦
+                    const boundNet = bindings[item.id.toString()];
                     const netBadgeHtml = boundNet ? `<span class="net-badge net-${boundNet}">${boundNet}</span>` : `<span class="net-badge" style="background:#0ea5e9;">全网并发</span>`;
 
                     tbody.innerHTML += `
@@ -950,17 +950,20 @@ echo json_encode(["code" => 200, "msg" => "SUCCESS"]);
             };
             if (!data.name || !data.address) return alert("名称和地址为必填项！");
             
+            let currentId = editAddressId;
             if (editAddressId) {
                 data.id = editAddressId;
                 await fetch('/api/addresses', { method: 'PUT', body: JSON.stringify(data) });
             } else {
-                await fetch('/api/addresses', { method: 'POST', body: JSON.stringify(data) });
+                const res = await fetch('/api/addresses', { method: 'POST', body: JSON.stringify(data) });
+                const resData = await res.json();
+                currentId = resData.id; // 提取数据库刚刚生成的序号ID
             }
-			// 【新增】同步将精准绑定关系存入 KV
+            
             const selectedNet = document.getElementById('new_addr_network').value;
             await fetch('/api/address-bindings', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ address: data.address, network: selectedNet })
+                body: JSON.stringify({ id: currentId, network: selectedNet }) // 核心解耦：将 address 换成 id 发送给后端
             });
             resetFormState('address');
             loadAddresses(); // 重新渲染表格
