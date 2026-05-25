@@ -130,8 +130,8 @@ export default {
             }
             if (request.method === "POST") {
                 const data = await request.json();
-                await env.db.prepare("INSERT INTO addresses (name, address, icon, remark) VALUES (?, ?, ?, ?)").bind(data.name, data.address, data.icon, data.remark).run();
-                return new Response(JSON.stringify({ success: true }));
+                const info = await env.db.prepare("INSERT INTO addresses (name, address, icon, remark) VALUES (?, ?, ?, ?)").bind(data.name, data.address, data.icon, data.remark).run();
+                return new Response(JSON.stringify({ success: true, id: info.meta.last_row_id }));
             }
             if (request.method === "DELETE") {
                 const urlObj = new URL(request.url);
@@ -208,10 +208,10 @@ export default {
                 return new Response(JSON.stringify(bindings), { headers: { "Content-Type": "application/json" } });
             }
             if (request.method === "POST") {
-                const { address, network } = await request.json();
+                const { id, network } = await request.json();
                 const bindings = await env.kv.get("address_to_network", "json") || {};
-                if (network && network !== "auto") bindings[address.toLowerCase()] = network.toUpperCase();
-                else delete bindings[address.toLowerCase()];
+                if (network && network !== "auto") bindings[id.toString()] = network.toUpperCase();
+                else delete bindings[id.toString()];
                 await env.kv.put("address_to_network", JSON.stringify(bindings));
                 return new Response(JSON.stringify({ success: true }));
             }
@@ -237,28 +237,31 @@ export default {
     async syncAllChainsData(env) {
         try {
             // 从 D1 数据库动态提取所有已激活的监控地址
-            const { results } = await env.db.prepare("SELECT address FROM addresses").all();
-            const addresses = results.map(row => row.address).filter(a => a);
-            if (addresses.length === 0) return;
+            const { results } = await env.db.prepare("SELECT id, address FROM addresses").all();
+            if (results.length === 0) return;
 
-            // 从 D1 关系型数据库提取当前处于激活状态(enabled=1)的外部业务回调路由节点
             const { results: webhooks } = await env.db.prepare("SELECT * FROM webhooks WHERE enabled = 1").all();
-
-            // 【修改】动态加载网络与 KV 绑定表
             const NETWORKS = await getDynamicNetworks(env);
             const bindings = await env.kv.get("address_to_network", "json") || {};
             const syncTasks = [];
 
             for (const [netName, netConfig] of Object.entries(NETWORKS)) {
-                const targetAddresses = addresses.filter(addr => {
-                    const boundNet = bindings[addr.toLowerCase()];
-                    if (netConfig.type === 'tron') return addr.startsWith("T");
-                    if (netConfig.type === 'evm' && addr.startsWith("0x") && addr.length === 42) return !boundNet || boundNet === netName;
-                    if (netConfig.type === 'aptos' && addr.startsWith("0x") && addr.length === 66) return !boundNet || boundNet === netName;
-                    if (netConfig.type === 'ton' && (addr.startsWith("UQ") || addr.startsWith("EQ"))) return !boundNet || boundNet === netName;
-                    if (netConfig.type === 'solana') return !addr.startsWith("0x") && !addr.startsWith("T") && !addr.startsWith("UQ") && !addr.startsWith("EQ") && addr.length >= 32 && (!boundNet || boundNet === netName);
-                    return false;
-                });
+                let validAddrs = [];
+                for (const row of results) {
+                    const addr = row.address;
+                    if (!addr) continue;
+                    const boundNet = bindings[row.id.toString()];
+                    
+                    let isMatch = false;
+                    if (netConfig.type === 'tron' && addr.startsWith("T")) isMatch = (!boundNet || boundNet === netName);
+                    if (netConfig.type === 'evm' && addr.startsWith("0x") && addr.length === 42) isMatch = (!boundNet || boundNet === netName);
+                    if (netConfig.type === 'aptos' && addr.startsWith("0x") && addr.length === 66) isMatch = (!boundNet || boundNet === netName);
+                    if (netConfig.type === 'ton' && (addr.startsWith("UQ") || addr.startsWith("EQ"))) isMatch = (!boundNet || boundNet === netName);
+                    if (netConfig.type === 'solana' && !addr.startsWith("0x") && !addr.startsWith("T") && !addr.startsWith("UQ") && !addr.startsWith("EQ") && addr.length >= 32) isMatch = (!boundNet || boundNet === netName);
+                    
+                    if (isMatch) validAddrs.push(addr);
+                }
+                const targetAddresses = [...new Set(validAddrs)]; // 强制去重，防止相同地址触发多次扫块请求
 
                 if (targetAddresses.length > 0) {
                     if (netConfig.type === 'tron') syncTasks.push(this.syncTronNetwork(env, netConfig, targetAddresses, webhooks));
