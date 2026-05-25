@@ -819,6 +819,28 @@ echo json_encode(["code" => 200, "msg" => "SUCCESS"]);
                     const iconHtml = item.icon ? `<img src="${item.icon}" style="width:39px; height:39px; border-radius:50%; object-fit:cover;">` : '无';
                     const timeStr = new Date(item.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'});
                     const statusChecked = item.enabled ? 'checked' : '';
+                    
+                    // 核心美化：将带 @@ 的底层机器码转换为对人类友好的 UI 标签
+                    let bindsDisplayHtml = '';
+                    if (item.binds === '*') {
+                        bindsDisplayHtml = '<span class="address-tag" style="background:#e0f2fe; color:#0284c7;">[*] 接收全网所有地址</span>';
+                    } else {
+                        bindsDisplayHtml = item.binds.split(',').map(b => {
+                            let bRaw = b.trim();
+                            if (bRaw.includes('@@')) {
+                                const parts = bRaw.split('@@');
+                                const addr = parts[0];
+                                const net = parts[1] || '全网并发';
+                                const shortAddr = addr.length > 12 ? addr.substring(0, 6) + '...' + addr.substring(addr.length - 4) : addr;
+                                return `<span class="address-tag" style="background:#f1f5f9; color:#475569; margin-bottom:4px;">[${net}] ${shortAddr}</span>`;
+                            } else {
+                                // 兼容以前没有加 @@ 的老数据
+                                const shortAddr = bRaw.length > 12 ? bRaw.substring(0, 6) + '...' + bRaw.substring(bRaw.length - 4) : bRaw;
+                                return `<span class="address-tag" style="background:#f1f5f9; color:#475569; margin-bottom:4px;">${shortAddr}</span>`;
+                            }
+                        }).join('');
+                    }
+
                     tbody.innerHTML += `
                         <tr>
                             <td>#${item.id}</td>
@@ -826,7 +848,7 @@ echo json_encode(["code" => 200, "msg" => "SUCCESS"]);
                             <td style="font-weight:500;">${item.name}</td>
                             <td style="font-family:monospace; font-size:0.85em; color:#0284c7; max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.url}">${item.url}</td>
                             <td style="font-family:monospace; color:#e67e22;">${item.secret}</td>
-                            <td><span class="address-tag" style="font-size:0.9em; background:#f1f5f9; color:#475569;">${item.binds}</span></td>
+                            <td><div style="display:flex; flex-direction:column;">${bindsDisplayHtml}</div></td>
                             <td style="font-size:0.85em; color:var(--text-muted);">${timeStr}</td>
                             <td style="color:var(--text-muted); font-size:0.85em;">${item.remark || '-'}</td>
                             <td>
