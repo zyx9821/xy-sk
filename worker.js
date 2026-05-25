@@ -397,9 +397,17 @@ export default {
         if (dbRes.meta.changes > 0 && webhooks.length > 0) {
             for (const wh of webhooks) {
                 if (!wh.enabled || !wh.url || !wh.secret) continue;
-                const binds = wh.binds.split(',').map(s => s.trim().toLowerCase());
+                const bindsRaw = wh.binds.split(',').map(s => s.trim().toLowerCase());
                 
-                if (binds.includes('*') || binds.includes(tx.toAddr.toLowerCase())) {
+                // 核心升级：拦截前端传来的 "地址@@网络" 格式，做到跨链同地址精准隔离推送
+                const isMatch = bindsRaw.includes('*') || bindsRaw.some(b => {
+                    const parts = b.split('@@');
+                    if (parts[0] !== tx.toAddr.toLowerCase()) return false; // 物理地址不匹配，拦截
+                    if (parts[1] && parts[1] !== '全网并发' && parts[1] !== tx.network.toLowerCase()) return false; // 链网络不匹配，拦截
+                    return true; // 地址和网络全对上，放行
+                });
+                
+                if (isMatch) {
                     // 安全增强：签名中加入 network 防止重放攻击
                     const signText = `${tx.network}${tx.txHash}${tx.amount}${wh.secret}`;
                     const msgBuffer = new TextEncoder().encode(signText);
