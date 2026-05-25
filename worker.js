@@ -35,21 +35,21 @@ export default {
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (tx_hash, network)
             );`).run();
             // 自动创建 webhooks 表
-                await env.db.prepare(`CREATE TABLE IF NOT EXISTS webhooks (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, url TEXT NOT NULL,
-                    secret TEXT NOT NULL, binds TEXT DEFAULT '*', icon TEXT, remark TEXT,
-                    enabled INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                );`).run();
+            await env.db.prepare(`CREATE TABLE IF NOT EXISTS webhooks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, url TEXT NOT NULL,
+                secret TEXT NOT NULL, binds TEXT DEFAULT '*', icon TEXT, remark TEXT,
+                enabled INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );`).run();
                 
             // 自动创建 addresses 表 (已解除 UNIQUE 限制支持同地址多节点)
-                await env.db.prepare(`CREATE TABLE IF NOT EXISTS addresses (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, address TEXT NOT NULL,
-                    icon TEXT, remark TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                );`).run();
+            await env.db.prepare(`CREATE TABLE IF NOT EXISTS addresses (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, address TEXT NOT NULL,
+                icon TEXT, remark TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );`).run();
             // 自动创建 sys_state 表 (用于替代 KV 高频存储区块高度)
-                await env.db.prepare(`CREATE TABLE IF NOT EXISTS sys_state (
-                    key_name TEXT PRIMARY KEY, key_value TEXT
-                );`).run();
+            await env.db.prepare(`CREATE TABLE IF NOT EXISTS sys_state (
+                key_name TEXT PRIMARY KEY, key_value TEXT
+            );`).run();
             await env.kv.put("admin_username", "admin");
             await env.kv.put("admin_password", "123456");
             await env.kv.put("system_init_v5", "true");
