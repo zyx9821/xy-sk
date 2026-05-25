@@ -41,10 +41,14 @@ export default {
                     enabled INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 );`).run();
                 
-                // 自动创建 addresses 表 (已解除 UNIQUE 限制支持同地址多节点)
+            // 自动创建 addresses 表 (已解除 UNIQUE 限制支持同地址多节点)
                 await env.db.prepare(`CREATE TABLE IF NOT EXISTS addresses (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, address TEXT NOT NULL,
                     icon TEXT, remark TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );`).run();
+            // 自动创建 sys_state 表 (用于替代 KV 高频存储区块高度)
+                await env.db.prepare(`CREATE TABLE IF NOT EXISTS sys_state (
+                    key_name TEXT PRIMARY KEY, key_value TEXT
                 );`).run();
             await env.kv.put("admin_username", "admin");
             await env.kv.put("admin_password", "123456");
@@ -302,8 +306,9 @@ export default {
             const blockData = await blockRes.json();
             const latestBlock = parseInt(blockData.result, 16);
 
-            // 读取上次扫描的区块，默认扫前 50 个区块防遗漏
-            let lastCheckBlock = parseInt(await env.kv.get(`last_block_${netName}`) || (latestBlock - 50));
+            // 改用 D1 数据库读取上次扫描的区块，默认扫前 50 个区块防遗漏
+            const stateRow = await env.db.prepare("SELECT key_value FROM sys_state WHERE key_name = ?").bind(`last_block_${netName}`).first();
+            let lastCheckBlock = parseInt((stateRow && stateRow.key_value) ? stateRow.key_value : (latestBlock - 50));
             
             // 如果间隔太大（如首次运行），限制最大跨度为 800 个区块，防止公共 RPC 报错
             if (latestBlock - lastCheckBlock > 800) lastCheckBlock = latestBlock - 800;
@@ -339,13 +344,15 @@ export default {
                     }
                 }
             }
-            await env.kv.put(`last_block_${netName}`, latestBlock.toString());
+            // 改用 D1 数据库的高频更新语句，白嫖每天 10 万次写入额度
+            await env.db.prepare("INSERT INTO sys_state (key_name, key_value) VALUES (?, ?) ON CONFLICT(key_name) DO UPDATE SET key_value = excluded.key_value").bind(`last_block_${netName}`, latestBlock.toString()).run();
         } catch (e) { console.error(`${netName} 同步异常:`, e); }
     },
 
     // --- 波场 TRON 同步核心 ---
     async syncTronNetwork(env, netConfig, addresses, webhooks) {
-        let minTimestamp = parseInt(await env.kv.get("last_check_tron") || (Date.now() - 3600000));
+        const stateRow = await env.db.prepare("SELECT key_value FROM sys_state WHERE key_name = ?").bind("last_check_tron").first();
+        let minTimestamp = parseInt((stateRow && stateRow.key_value) ? stateRow.key_value : (Date.now() - 3600000));
         let globalNewestTime = minTimestamp;
 
         for (const myAddress of addresses) {
@@ -370,7 +377,9 @@ export default {
                 }
             } catch (e) { console.error(`TRON 同步异常:`, e); }
         }
-        if (globalNewestTime > minTimestamp) await env.kv.put("last_check_tron", globalNewestTime.toString());
+        if (globalNewestTime > minTimestamp) {
+            await env.db.prepare("INSERT INTO sys_state (key_name, key_value) VALUES (?, ?) ON CONFLICT(key_name) DO UPDATE SET key_value = excluded.key_value").bind("last_check_tron", globalNewestTime.toString()).run();
+        }
     },
     // --- 异构公链独立扫块引擎框架 (Aptos, Solana, TON) ---
     async syncAptosNetwork(env, addresses, webhooks) {
