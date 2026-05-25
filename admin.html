@@ -238,12 +238,12 @@
                         <table id="webhookTable">
                             <thead>
                                 <tr>
-                                    <th>节点序数ID</th>
-                                    <th>图标/图片</th>
+                                    <th>节点ID</th>
+                                    <th>图标</th>
                                     <th>名称</th>
                                     <th>CALLBACK_URL</th>
                                     <th>APP_SECRET</th>
-                                    <th>绑定靓号池</th>
+                                    <th>绑定号池</th>
                                     <th>添加日期</th>
                                     <th>备注</th>
                                     <th>状态</th>
@@ -825,7 +825,7 @@ echo json_encode(["code" => 200, "msg" => "SUCCESS"]);
                             <td>#${item.id}</td>
                             <td>${iconHtml}</td>
                             <td style="font-weight:500;">${item.name}</td>
-                            <td style="font-family:monospace; font-size:0.85em; color:#0284c7; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.url}">${item.url}</td>
+                            <td style="font-family:monospace; font-size:0.85em; color:#0284c7; max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${item.url}">${item.url}</td>
                             <td style="font-family:monospace; color:#e67e22;">${item.secret}</td>
                             <td><span class="address-tag" style="font-size:0.9em; background:#f1f5f9; color:#475569;">${item.binds}</span></td>
                             <td style="font-size:0.85em; color:var(--text-muted);">${timeStr}</td>
@@ -932,16 +932,29 @@ echo json_encode(["code" => 200, "msg" => "SUCCESS"]);
                         </tr>
                     `;
                 });
-                // --- 动态渲染回调路由的多选下拉框 ---
+                // --- 动态渲染回调路由的下拉框 (去重合并同地址) ---
                 const whSelect = document.getElementById('new_wh_binds');
                 whSelect.innerHTML = '<option value="*">[*] 接收所有地址回调</option>';
+                
+                // 核心修复：将相同地址的不同名称进行合并，防止 value 冲突导致选择错位
+                const uniqueAddresses = {};
                 list.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.address;
-                    // 结合地址和网络，头尾截取展示防止太长
-                    option.textContent = `${item.name} (${item.address.substring(0,8)}...${item.address.substring(item.address.length-4)})`;
-                    whSelect.appendChild(option);
+                    const addrStr = item.address;
+                    if (!uniqueAddresses[addrStr]) {
+                        uniqueAddresses[addrStr] = { names: [], rawAddress: addrStr };
+                    }
+                    uniqueAddresses[addrStr].names.push(item.name); // 收集同地址的所有名称
                 });
+
+                for (const key in uniqueAddresses) {
+                    const group = uniqueAddresses[key];
+                    const option = document.createElement('option');
+                    option.value = group.rawAddress; // value 保持唯一的地址字符串
+                    // 将名字拼在一起，例如：波场主号 / 业务A号 (0x12...34)
+                    const combinedNames = group.names.join(' / ');
+                    option.textContent = `${combinedNames} (${group.rawAddress.substring(0,8)}...${group.rawAddress.substring(group.rawAddress.length-4)})`;
+                    whSelect.appendChild(option);
+                }
             } catch (e) { console.error("加载地址失败", e); }
         }
 
